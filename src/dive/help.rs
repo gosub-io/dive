@@ -2,8 +2,9 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, Padding, Paragraph, Wrap};
+use ratatui::widgets::{Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 use crate::dive::app::App;
+use crate::dive::display_object::Displayable;
 
 const HELPTEXT: &'static str = r#"
 
@@ -40,6 +41,7 @@ This is the help screen for Gosub Dive. It is a work in progress and displays th
   #1ALT-0..9#0  Switch to tab 0..9
   #1CTRL-I#0    Rename tab
   #1TAB#0       Switch to next tab
+
 "#;
 
 fn generate_lines_from_helptext() -> Vec<Line<'static>> {
@@ -104,69 +106,103 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     lines
 }
 
-pub fn help_render(app: &mut App, f: &mut Frame) {
-    let size = f.size();
-    let margins = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Percentage(10),
-            Constraint::Percentage(80),
-            Constraint::Percentage(10),
-        ])
-        .split(size)
-    ;
 
-    let help_block_area = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Percentage(10),
-            Constraint::Percentage(80),
-            Constraint::Percentage(10),
-        ])
-        .split(margins[1])[1]
-    ;
-
-    let help_block = Block::default()
-        .title(" Help ")
-        .borders(Borders::ALL)
-        .padding(Padding::uniform(1))
-    ;
-
-    // generate help text, based on #N coloring
-    let help_lines = generate_lines_from_helptext();
-
-    let help_paragraph = Paragraph::new(Text::from(help_lines))
-        .block(help_block)
-        .wrap(Wrap { trim: false })
-        .scroll((app.help_scroll, 0))
-    ;
-
-    // f.render_widget(help_paragraph, help_block_area);
-    f.render_widget(help_paragraph, help_block_area);
+struct HelpDisplayObject {
+    pub vertical_scroll_state: ScrollbarState,
+    pub vertical_scroll: usize,
+    pub vertical_scroll_max: usize,
 }
 
-pub fn help_process_keys(app: &mut App, key: KeyEvent) -> anyhow::Result<()> {
-    match key.code {
-        KeyCode::F(1) => {
-            app.show_help = !app.show_help;
-            app.help_scroll = 0;
-            if app.show_help {
-                app.status = "Opened help screen".into();
-            } else {
-                app.status = "Closed help screen".into();
-            }
+impl HelpDisplayObject {
+    pub fn new() -> Self {
+        Self {
+            vertical_scroll_state: ScrollbarState::default(),
+            vertical_scroll: 0,
+            vertical_scroll_max: 0,
         }
-        KeyCode::Up => {
-            if app.help_scroll > 0 {
-                app.help_scroll -= 1;
-            }
-        },
-        KeyCode::Down => {
-            app.help_scroll += 1;
-        },
-        Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
-        _ => {}
+    }
+}
+
+impl Displayable for HelpDisplayObject {
+    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+        let size = f.size();
+        let margins = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Percentage(10),
+                Constraint::Percentage(80),
+                Constraint::Percentage(10),
+            ])
+            .split(size)
+            ;
+
+        let help_block_area = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Percentage(10),
+                Constraint::Percentage(80),
+                Constraint::Percentage(10),
+            ])
+            .split(margins[1])[1]
+            ;
+
+        let help_block = Block::default()
+            .title(" Help ")
+            .borders(Borders::ALL)
+            .padding(Padding::uniform(1))
+            ;
+
+        // generate help text, based on #N coloring
+        let help_lines = generate_lines_from_helptext();
+        self.vertical_scroll_max = help_lines.len();
+        self.vertical_scroll_state = self.vertical_scroll_state.content_length(self.vertical_scroll_max);
+
+        let help_paragraph = Paragraph::new(Text::from(help_lines))
+            .block(help_block)
+            .wrap(Wrap { trim: false })
+            .scroll((self.vertical_scroll as u16, 0))
+            ;
+
+        f.render_widget(help_paragraph, help_block_area);
+
+        f.render_stateful_widget(
+            Scrollbar::default()
+                .orientation(ScrollbarOrientation::VerticalRight)
+                .begin_symbol(Some("↑"))
+                .end_symbol(Some("↓")),
+            help_block_area,
+            &mut self.vertical_scroll_state,
+        );
     }
 
-    Ok(())
+    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<()> {
+        match key.code {
+            KeyCode::F(1) => {
+                let obj = app.find_display_object_mut("help").unwrap();
+                obj.hide(app);
+            }
+            KeyCode::Down => {
+                self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
+                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
+            },
+            KeyCode::Up => {
+                self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
+                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
+            },
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
+            _ => {}
+        }
+
+        Ok(())
+    }
+
+    fn on_show(&mut self, app: &mut App) {
+        self.vertical_scroll = 0;
+        app.status = "Opened help screen".into();
+    }
+
+    fn on_hide(&mut self, app: &mut App) {
+        app.status = "Closed help screen".into();
+    }
 }
+

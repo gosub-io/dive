@@ -4,7 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::prelude::{CrosstermBackend, Terminal};
-use crate::dive::app::{App, app_ui, app_update};
+use crate::dive::app::App;
 use crate::dive::tab::Tab;
 
 mod dive;
@@ -26,11 +26,11 @@ fn run(app: &mut App) -> anyhow::Result<()> {
 
     loop {
         t.draw(|f| {
-            app_ui(app, f);
+            app.render(f);
         })?;
 
         // application update
-        app_update(app)?;
+        app.handle_events()?;
 
         // application exit
         if app.should_quit {
@@ -54,9 +54,15 @@ fn main() -> Result<()> {
         menu_active: false,
         menu_item_active: 0,
         current_tab: 0,
-        show_help: false,
-        help_scroll: 0,
+        // show_help: false,
         status: "Press F1 for help".into(),
+        // vertical_scroll_state: Default::default(),
+        // vertical_scroll: 0,
+        // vertical_scroll_max: 0,
+        // popup: true,
+
+        display_objects: vec![],
+        active_display_object_index: 0,
     };
 
     startup()?;
