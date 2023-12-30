@@ -10,7 +10,7 @@ pub struct Tab {
 pub fn tab_switch(app: &mut App, tab: usize) {
     if tab < app.tabs.len() {
         app.current_tab = tab;
-        app.status = format!("Switched to tab {}", app.current_tab);
+        app.set_status(format!("Switched to tab {}", app.current_tab).as_str());
     }
 }
 

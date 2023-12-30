@@ -5,22 +5,22 @@ use ratatui::prelude::{Color, Style, Stylize};
 use ratatui::widgets::{Block, Borders};
 use tui_input::backend::crossterm::EventHandler;
 use tui_input::Input;
-use crate::dive::app::App;
+use crate::AppRef;
 use crate::dive::display_object::Displayable;
 
 pub struct InputBox {
     pub input: Input,
     pub title: String,
-    pub on_show_func: Option<Box<dyn Fn(&mut App)>>,
-    pub on_hide_func: Option<Box<dyn Fn(&mut App)>>,
+    pub on_show_func: Option<Box<dyn Fn(AppRef)>>,
+    pub on_hide_func: Option<Box<dyn Fn(AppRef)>>,
 }
 
 impl InputBox {
     pub fn new(
         title: String,
         default_input: Option<String>,
-        on_show_func: Option<Box<dyn Fn(&mut App)>>,
-        on_hide_func: Option<Box<dyn Fn(&mut App)>>,
+        on_show_func: Option<Box<dyn Fn(AppRef)>>,
+        on_hide_func: Option<Box<dyn Fn(AppRef)>>,
     ) -> Self {
         Self {
             input: default_input.unwrap_or("".into()).into(),
@@ -32,7 +32,7 @@ impl InputBox {
 }
 
 impl Displayable for InputBox {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, _app: AppRef, f: &mut Frame) {
         let popup_block = Block::default()
             .title(self.title.as_str())
             .borders(Borders::ALL)
@@ -42,7 +42,7 @@ impl Displayable for InputBox {
         f.render_widget(popup_block, area);
     }
 
-    fn event_handler(&mut self, _app: &mut App, key: KeyEvent) -> anyhow::Result<()> {
+    fn event_handler(&mut self, _app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
             KeyCode::Esc => {
                 // app.popup = false;
@@ -60,7 +60,7 @@ impl Displayable for InputBox {
         Ok(())
     }
 
-    fn on_show(&mut self, app: &mut App) {
+    fn on_show(&mut self, app: AppRef) {
         self.input = "".into();
 
         if self.on_show_func.is_some() {
@@ -68,7 +68,7 @@ impl Displayable for InputBox {
         }
     }
 
-    fn on_hide(&mut self, app: &mut App) {
+    fn on_hide(&mut self, app: AppRef) {
         self.input = "".into();
 
         if self.on_show_func.is_some() {

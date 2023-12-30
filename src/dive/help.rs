@@ -3,7 +3,7 @@ use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
-use crate::dive::app::App;
+use crate::AppRef;
 use crate::dive::display_object::Displayable;
 
 const HELPTEXT: &'static str = r#"
@@ -107,7 +107,7 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
 }
 
 
-struct HelpDisplayObject {
+pub struct HelpDisplayObject {
     pub vertical_scroll_state: ScrollbarState,
     pub vertical_scroll: usize,
     pub vertical_scroll_max: usize,
@@ -124,7 +124,7 @@ impl HelpDisplayObject {
 }
 
 impl Displayable for HelpDisplayObject {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, _app: AppRef, f: &mut Frame) {
         let size = f.size();
         let margins = Layout::default()
             .direction(Direction::Vertical)
@@ -175,11 +175,12 @@ impl Displayable for HelpDisplayObject {
         );
     }
 
-    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<()> {
+    fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
             KeyCode::F(1) => {
-                let obj = app.find_display_object_mut("help").unwrap();
-                obj.hide(app);
+                let mut app_ref = app.borrow_mut();
+                let obj = app_ref.find_display_object_mut("help").unwrap();
+                obj.hide(app.clone());
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
@@ -189,20 +190,20 @@ impl Displayable for HelpDisplayObject {
                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
             },
-            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.borrow_mut().should_quit = true,
             _ => {}
         }
 
         Ok(())
     }
 
-    fn on_show(&mut self, app: &mut App) {
+    fn on_show(&mut self, app: AppRef) {
         self.vertical_scroll = 0;
-        app.status = "Opened help screen".into();
+        app.borrow_mut().set_status("Opened help screen");
     }
 
-    fn on_hide(&mut self, app: &mut App) {
-        app.status = "Closed help screen".into();
+    fn on_hide(&mut self, app: AppRef) {
+        app.borrow_mut().set_status("Closed help screen");
     }
 }
 

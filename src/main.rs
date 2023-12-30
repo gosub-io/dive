@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use anyhow::Result;
 use crossterm::{
     execute,
@@ -5,9 +7,10 @@ use crossterm::{
 };
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use crate::dive::app::App;
-use crate::dive::tab::Tab;
 
 mod dive;
+
+type AppRef = Rc<RefCell<App>>;
 
 fn startup() -> Result<()> {
     enable_raw_mode()?;
@@ -21,19 +24,19 @@ fn shutdown() -> Result<()> {
     Ok(())
 }
 
-fn run(app: &mut App) -> anyhow::Result<()> {
+fn run(app: AppRef) -> anyhow::Result<()> {
     let mut t = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
 
     loop {
         t.draw(|f| {
-            app.render(f);
+            app.borrow_mut().render(app.clone(), f);
         })?;
 
         // application update
-        app.handle_events()?;
+        app.borrow_mut().handle_events(app.clone())?;
 
         // application exit
-        if app.should_quit {
+        if app.borrow().should_quit {
             break;
         }
     }
@@ -42,31 +45,13 @@ fn run(app: &mut App) -> anyhow::Result<()> {
 }
 
 fn main() -> Result<()> {
-    let tab1 = Tab {
-        name: "New Tab".to_string(),
-        url: "gosub://blank".to_string(),
-        content: String::new(),
-    };
-
-    let mut app = App {
-        tabs: vec![tab1],
-        should_quit: false,
-        menu_active: false,
-        menu_item_active: 0,
-        current_tab: 0,
-        // show_help: false,
-        status: "Press F1 for help".into(),
-        // vertical_scroll_state: Default::default(),
-        // vertical_scroll: 0,
-        // vertical_scroll_max: 0,
-        // popup: true,
-
-        display_objects: vec![],
-        active_display_object_index: 0,
-    };
+    let app = Rc::new(RefCell::new(App::new()));
+    app.borrow_mut().add_tab("New Tab", "gosub://blank");
+    app.borrow_mut().add_tab("Second Tab", "https://gosub.io");
+    app.borrow_mut().add_tab("Third Tab", "https://noxlogic.nl");
 
     startup()?;
-    let status = run(&mut app);
+    let status = run(app.clone());
     shutdown()?;
     status?;
     Ok(())
