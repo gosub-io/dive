@@ -1,16 +1,12 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use anyhow::Result;
 use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::prelude::{CrosstermBackend, Terminal};
-use crate::dive::app::App;
+use crate::dive::app::{App, AppRef};
 
 mod dive;
-
-type AppRef = Rc<RefCell<App>>;
 
 fn startup() -> Result<()> {
     enable_raw_mode()?;
@@ -29,7 +25,7 @@ fn run(app: AppRef) -> anyhow::Result<()> {
 
     loop {
         t.draw(|f| {
-            app.borrow_mut().render(app.clone(), f);
+            app.borrow().render(app.clone(), f);
         })?;
 
         // application update
@@ -45,10 +41,11 @@ fn run(app: AppRef) -> anyhow::Result<()> {
 }
 
 fn main() -> Result<()> {
-    let app = Rc::new(RefCell::new(App::new()));
-    app.borrow_mut().add_tab("New Tab", "gosub://blank");
-    app.borrow_mut().add_tab("Second Tab", "https://gosub.io");
-    app.borrow_mut().add_tab("Third Tab", "https://noxlogic.nl");
+    let app = App::new();
+
+    app.borrow_mut().tab_manager.borrow_mut().add_tab("New Tab", "gosub://blank");
+    app.borrow_mut().tab_manager.borrow_mut().add_tab("Second Tab", "https://gosub.io");
+    app.borrow_mut().tab_manager.borrow_mut().add_tab("Third Tab", "https://news.ycombinator.com");
 
     startup()?;
     let status = run(app.clone());

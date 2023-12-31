@@ -1,9 +1,9 @@
 use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
 use crossterm::event::KeyEvent;
-use crate::AppRef;
+use crate::dive::app::AppRef;
 use crate::dive::display_object::Displayable;
-
+use crate::dive::ui::get_layout_chunks;
 
 pub struct MenuBar {
     pub active: bool,
@@ -18,13 +18,14 @@ impl MenuBar {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_active(&mut self, active: bool) {
         self.active = active;
     }
 }
 
 impl Displayable for MenuBar {
-    fn render(&mut self, app: AppRef, f: &mut Frame) {
+    fn render(&mut self, _app: AppRef, f: &mut Frame) {
 
         let menu_items = vec![
             "File",
@@ -53,14 +54,14 @@ impl Displayable for MenuBar {
             }
         }
 
-        let chunks = app.borrow().get_layout_chunks(f);
+        let chunks = get_layout_chunks(f);
         let menu_bar = Paragraph::new(Line::from(menu_tiles)).style(Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD));
         f.render_widget(menu_bar, chunks[0]);
     }
 
-    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<()> {
+    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         // We should handle left, right to change the menu item active
-        Ok(())
+        Ok(None)
     }
 
     fn on_show(&mut self, _app: AppRef) { }

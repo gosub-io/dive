@@ -3,7 +3,7 @@ use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
-use crate::AppRef;
+use crate::dive::app::AppRef;
 use crate::dive::display_object::Displayable;
 
 const HELPTEXT: &'static str = r#"
@@ -106,7 +106,6 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     lines
 }
 
-
 pub struct HelpDisplayObject {
     pub vertical_scroll_state: ScrollbarState,
     pub vertical_scroll: usize,
@@ -175,12 +174,10 @@ impl Displayable for HelpDisplayObject {
         );
     }
 
-    fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
+    fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
-            KeyCode::F(1) => {
-                let mut app_ref = app.borrow_mut();
-                let obj = app_ref.find_display_object_mut("help").unwrap();
-                obj.hide(app.clone());
+            KeyCode::Esc | KeyCode::F(1) => {
+                app.borrow_mut().hide_display_object("help");
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
@@ -194,7 +191,7 @@ impl Displayable for HelpDisplayObject {
             _ => {}
         }
 
-        Ok(())
+        Ok(Some(key))
     }
 
     fn on_show(&mut self, app: AppRef) {

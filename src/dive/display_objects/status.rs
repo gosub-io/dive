@@ -1,16 +1,9 @@
 use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
-use crate::AppRef;
+use crate::dive::app::AppRef;
 use crate::dive::display_object::Displayable;
-
-// pub fn status_render(app: &mut App) -> Paragraph<'static> {
-//     Paragraph::new(Line::from(vec![
-//         Span::styled(app.status.clone(), Style::default().add_modifier(Modifier::BOLD)),
-//         Span::raw(" | "),
-//         Span::raw("Line 1, Column 1"),
-//     ])).style(Style::default().bg(Color::Blue).bold())
-// }
+use crate::dive::ui::get_layout_chunks;
 
 pub struct StatusBar {
     pub status: String,
@@ -29,8 +22,8 @@ impl StatusBar {
 }
 
 impl Displayable for StatusBar {
-    fn render(&mut self, app: AppRef, f: &mut Frame) {
-        let chunks = app.borrow().get_layout_chunks(f);
+    fn render(&mut self, _app: AppRef, f: &mut Frame) {
+        let chunks = get_layout_chunks(f);
 
         let status_bar = Paragraph::new(Line::from(vec![
             Span::styled(self.status.clone(), Style::default().add_modifier(Modifier::BOLD)),
@@ -41,8 +34,9 @@ impl Displayable for StatusBar {
         f.render_widget(status_bar, chunks[2]);
     }
 
-    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<()> {
-        Ok(())
+    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+        // Status bar does not handle keys
+        Ok(None)
     }
 
     fn on_show(&mut self, _app: AppRef) { }

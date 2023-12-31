@@ -5,66 +5,68 @@ use crossterm::event::KeyCode::Char;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crossterm::event::Event::Key;
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout};
-use ratatui::prelude::Rect;
-use crate::AppRef;
-use crate::dive::tab::{Tab, tab_switch, tabs_render};
+use crate::dive;
 use crate::dive::display_object::DisplayObject;
-use crate::dive::help::HelpDisplayObject;
-use crate::dive::menu::MenuBar;
-use crate::dive::status::StatusBar;
-use crate::dive::test::TestDisplayObject;
+use crate::dive::display_objects::menu::MenuBar;
+use crate::dive::display_objects::status::StatusBar;
+use crate::dive::tab_manager::TabManager;
+
+pub type AppRef = Rc<RefCell<App>>;
 
 pub struct App {
-    pub tabs: Vec<Tab>,
-    pub current_tab: usize,
-
+    /// True when the application should exit
     pub should_quit: bool,
 
+    /// List of display objects to render/handle
     pub display_objects: Vec<DisplayObject>,
+    /// Index of the active display object (which handles key strokes)
     pub active_display_object_index: usize,
 
+    /// Status bar object
     pub status_bar: Rc<RefCell<StatusBar>>,
+    /// Menu bar object
     pub menu_bar: Rc<RefCell<MenuBar>>,
+    /// TabLayout object
+    pub tab_manager: Rc<RefCell<TabManager>>,
 }
 
 impl App {
-    pub fn new() -> Self {
-        let mut app = App {
-            tabs: vec![],
+    pub fn new() -> AppRef {
+        let status_bar = Rc::new(RefCell::new(StatusBar::new()));
+        let menu_bar = Rc::new(RefCell::new(MenuBar::new()));
+        let tab_manager = Rc::new(RefCell::new(TabManager::new()));
+
+        let app = App {
             should_quit: false,
-            current_tab: 0,
 
             display_objects: vec![],
             active_display_object_index: 0,
 
-            status_bar: Rc::new(RefCell::new(StatusBar::new())),
-            menu_bar: Rc::new(RefCell::new(MenuBar::new())),
+            status_bar: status_bar.clone(),
+            menu_bar: menu_bar.clone(),
+            tab_manager: tab_manager.clone(),
         };
 
-        let test = Rc::new(RefCell::new(TestDisplayObject::new()));
-        let help = Rc::new(RefCell::new(HelpDisplayObject::new()));
+        let app_ref = Rc::new(RefCell::new(app));
+
+        let tab_display_obj= Rc::new(RefCell::new(dive::display_objects::tab_display::TabDisplay::new(tab_manager.clone())));
 
         // Add display objects
-        app.display_objects.push(DisplayObject::new("menu", 128, app.menu_bar.clone(), true));
-        app.display_objects.push(DisplayObject::new("status", 128, app.status_bar.clone(), true));
-        app.display_objects.push(DisplayObject::new("test", 64, test.clone(), true));
-        app.display_objects.push(DisplayObject::new("help", 0, help.clone(), false));
+        app_ref.borrow_mut().display_objects.push(DisplayObject::new("menu", 128, menu_bar.clone(), true));
+        app_ref.borrow_mut().display_objects.push(DisplayObject::new("status", 128, status_bar.clone(), true));
+        app_ref.borrow_mut().display_objects.push(DisplayObject::new("tabs", 0, tab_display_obj.clone(), true));
 
-        app
-    }
+        let test = Rc::new(RefCell::new(dive::display_objects::test::TestDisplayObject::new()));
+        app_ref.borrow_mut().display_objects.push(DisplayObject::new("test", 64, test.clone(), false));
 
-    pub fn add_tab(&mut self, name: &str, url: &str) {
-        let tab = Tab {
-            name: name.into(),
-            url: url.into(),
-            content: String::new(),
-        };
+        let help = Rc::new(RefCell::new(dive::display_objects::help::HelpDisplayObject::new()));
+        app_ref.borrow_mut().display_objects.push(DisplayObject::new("help", 0, help.clone(), false));
 
-        self.tabs.push(tab);
+        app_ref
     }
 
     /// Find the display object with the given id or None when not found
+    #[allow(dead_code)]
     pub(crate) fn find_display_object(&self, id: &str) -> Option<&DisplayObject> {
         for display_object in self.display_objects.iter() {
             if display_object.id == id {
@@ -75,7 +77,7 @@ impl App {
         None
     }
 
-    pub(crate) fn find_display_object_mut(&mut self, id: &str) -> Option<&mut DisplayObject> {
+    pub fn find_display_object_mut(&mut self, id: &str) -> Option<&mut DisplayObject> {
         for display_object in self.display_objects.iter_mut() {
             if display_object.id == id {
                 return Some(display_object);
@@ -98,6 +100,12 @@ impl App {
         self.status_bar.borrow_mut().set_status(status);
     }
 
+    pub(crate) fn hide_display_object(&mut self, id: &str) {
+        if let Some(display_object) = self.find_display_object_mut(id) {
+            display_object.show = false;
+        }
+    }
+
     pub(crate) fn handle_events(&mut self, app: AppRef) -> anyhow::Result<()> {
         if ! event::poll(std::time::Duration::from_millis(250))? {
             return Ok(());
@@ -106,47 +114,26 @@ impl App {
         if let Key(key) = event::read()? {
             if key.kind == event::KeyEventKind::Press {
                 let display_obj = &mut self.display_objects[self.active_display_object_index];
-                display_obj.object.borrow_mut().event_handler(app.clone(), key)?;
 
-                // also let main app handle the key
-                self.process_key(key)?;
+                let res = display_obj.object.borrow().event_handler(app, key)?;
+                if res.is_none() {
+                    // The display object did not handle the key, so we should handle it
+                    self.process_key(key)?;
+                }
             }
         }
 
         Ok(())
     }
 
-    /// Returns the layout chunks for the main screen
-    pub fn get_layout_chunks(&self, f: &mut Frame) -> Rc<[Rect]> {
-        let size = f.size();
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .margin(1)
-            .constraints(
-                [
-                    Constraint::Length(1),      // menu bar
-                    Constraint::Min(0),         // content
-                    Constraint::Length(1),      // status bar
-                ]
-                    .as_ref(),
-            )
-            .split(size);
-
-        chunks
-    }
-
     // Renders the screen, and all display objects
-    pub(crate) fn render(&mut self, app: AppRef, f: &mut Frame) {
-        let chunks = self.get_layout_chunks(f);
-
-        let tabs = tabs_render(self);
-        f.render_widget(tabs, chunks[1]);
-
+    pub(crate) fn render(&self, app: AppRef, f: &mut Frame) {
         // Iterate all display objects, and sort them by priority (0 == first)
-        self.display_objects.sort_by(|a, b| a.priority.cmp(&b.priority));
+        let mut objs = self.display_objects.clone();
+        objs.sort_by(|a, b| a.priority.cmp(&b.priority));
 
         // Render all showable display objects
-        for display_object in self.display_objects.iter_mut() {
+        for display_object in objs.iter_mut() {
             if !display_object.show {
                 continue;
             }
@@ -156,17 +143,17 @@ impl App {
 
     /// Main key handling
     fn process_key(&mut self, key: KeyEvent) -> anyhow::Result<()> {
+
         match key.code {
-            Char('0') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 0),
-            Char('1') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 1),
-            Char('2') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 2),
-            Char('3') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 3),
-            Char('4') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 4),
-            Char('5') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 5),
-            Char('6') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 6),
-            Char('7') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 7),
-            Char('8') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 8),
-            Char('9') if key.modifiers.contains(KeyModifiers::ALT) => tab_switch(self, 9),
+            Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_digit(10) => {
+                if let Some(digit) = c.to_digit(10) {
+                    {
+                        let mut tab_manager = self.tab_manager.borrow_mut();
+                        tab_manager.switch(digit as usize);
+                    }
+                    self.status_bar.borrow_mut().set_status(format!("Switched to tab {}", digit).as_str());
+                }
+            },
 
             KeyCode::F(1) => {
                 let obj = self.find_display_object_mut("help").unwrap();
@@ -182,8 +169,12 @@ impl App {
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
             KeyCode::Tab => {
-                self.current_tab = (self.current_tab + 1) % self.tabs.len();
-                self.set_status(format!("Switched to tab {}", self.current_tab).as_str());
+                let idx;
+                {
+                    let mut tab_manager = self.tab_manager.borrow_mut();
+                    idx = tab_manager.next();
+                }
+                self.set_status(format!("Switched to tab {}", idx).as_str());
             },
 
             // Char('i') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -191,25 +182,30 @@ impl App {
             //     self.popup = true;
             // }
             Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                if self.tabs.len() > 1 {
-                    self.tabs.remove(self.current_tab);
-                    self.set_status(format!("Closed tab {}", self.current_tab).as_str());
-                    if self.current_tab > 0 {
-                        self.current_tab -= 1;
+                let tab_count = self.tab_manager.borrow().tab_count();
+
+                if tab_count > 1 {
+                    let idx;
+                    {
+                        let mut tab_manager = self.tab_manager.borrow_mut();
+                        idx = tab_manager.current;
+                        tab_manager.close(idx);
                     }
+                    self.set_status(format!("Closed tab {}", idx).as_str());
                 } else {
                     self.set_status("Can't close last tab");
                 }
             },
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.tabs.push(Tab {
-                    name: "New Tab".to_string(),
-                    url: "gosub://blank".to_string(),
-                    content: String::new(),
-                });
-                self.set_status(format!("Opened new tab {}", self.tabs.len() - 1).as_str());
-                self.current_tab = self.tabs.len() - 1;
+                let idx;
+                {
+                    let mut tab_manager = self.tab_manager.borrow_mut();
+                    idx = tab_manager.add_tab("New Tab", "gosub://blank");
+                    tab_manager.switch(idx);
+                }
+                self.set_status(format!("Opened new tab {}", idx).as_str());
             },
+
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => self.should_quit = true,
             _ => {},
         }
