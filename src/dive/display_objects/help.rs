@@ -4,7 +4,7 @@ use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 use crate::dive::app::AppRef;
-use crate::dive::display_object::Displayable;
+use crate::dive::obj_manager::Displayable;
 
 const HELPTEXT: &'static str = r#"
 
@@ -177,7 +177,7 @@ impl Displayable for HelpDisplayObject {
     fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
-                app.borrow_mut().hide_display_object("help");
+                app.borrow().obj_manager.borrow_mut().visible("help", false);
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);

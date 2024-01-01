@@ -29,7 +29,7 @@ fn run(app: AppRef) -> anyhow::Result<()> {
         })?;
 
         // application update
-        app.borrow_mut().handle_events(app.clone())?;
+        app.borrow().handle_events(app.clone())?;
 
         // application exit
         if app.borrow().should_quit {

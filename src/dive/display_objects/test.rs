@@ -3,7 +3,7 @@ use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, BorderType, Paragraph};
 use crate::dive::app::AppRef;
-use crate::dive::display_object::Displayable;
+use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
 
 pub struct TestDisplayObject;

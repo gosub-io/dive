@@ -4,7 +4,7 @@ use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::widgets::{Block, Borders, Tabs};
 use crate::dive::app::AppRef;
-use crate::dive::display_object::Displayable;
+use crate::dive::obj_manager::Displayable;
 use crate::dive::tab_manager::TabManager;
 use crate::dive::ui::get_layout_chunks;
 

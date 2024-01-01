@@ -5,7 +5,7 @@ use ratatui::widgets::{Block, Borders};
 use tui_input::backend::crossterm::EventHandler;
 use tui_input::Input;
 use crate::dive::app::AppRef;
-use crate::dive::display_object::Displayable;
+use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
 
 pub struct InputBox {

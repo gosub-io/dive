@@ -2,7 +2,7 @@ use ratatui::prelude::*;
 use ratatui::widgets::Paragraph;
 use crossterm::event::KeyEvent;
 use crate::dive::app::AppRef;
-use crate::dive::display_object::Displayable;
+use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::get_layout_chunks;
 
 pub struct MenuBar {
