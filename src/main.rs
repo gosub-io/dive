@@ -1,8 +1,5 @@
 use anyhow::Result;
-use crossterm::{
-    execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
-};
+use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use crate::dive::app::{App, AppRef};
 
@@ -22,6 +19,7 @@ fn shutdown() -> Result<()> {
 
 fn run(app: AppRef) -> anyhow::Result<()> {
     let mut t = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
+    let _ = t.clear()?;
 
     loop {
         t.draw(|f| {

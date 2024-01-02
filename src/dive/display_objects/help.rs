@@ -2,7 +2,7 @@ use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
+use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 
@@ -162,6 +162,7 @@ impl Displayable for HelpDisplayObject {
             .scroll((self.vertical_scroll as u16, 0))
             ;
 
+        f.render_widget(Clear, help_block_area);
         f.render_widget(help_paragraph, help_block_area);
 
         f.render_stateful_widget(

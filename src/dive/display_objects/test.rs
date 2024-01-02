@@ -1,7 +1,7 @@
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, BorderType, Paragraph};
+use ratatui::widgets::{Block, Borders, BorderType, Clear, Paragraph};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
@@ -30,6 +30,7 @@ impl Displayable for TestDisplayObject {
         ;
 
         let area = centered_rect(60, 25, f.size());
+        f.render_widget(Clear, area);
         f.render_widget(paragraph, area);
     }
 

@@ -1,5 +1,5 @@
 use ratatui::prelude::*;
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Clear, Paragraph};
 use crossterm::event::KeyEvent;
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
@@ -56,6 +56,8 @@ impl Displayable for MenuBar {
 
         let chunks = get_layout_chunks(f);
         let menu_bar = Paragraph::new(Line::from(menu_tiles)).style(Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD));
+
+        f.render_widget(Clear, chunks[0]);
         f.render_widget(menu_bar, chunks[0]);
     }
 

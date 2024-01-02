@@ -1,6 +1,6 @@
 use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
-use ratatui::widgets::Paragraph;
+use ratatui::widgets::{Clear, Paragraph};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::get_layout_chunks;
@@ -31,6 +31,7 @@ impl Displayable for StatusBar {
             Span::raw("Line 1, Column 1"),
         ])).style(Style::default().bg(Color::Blue).bold());
 
+        f.render_widget(Clear, chunks[2]);
         f.render_widget(status_bar, chunks[2]);
     }
 

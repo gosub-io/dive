@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use ratatui::widgets::{Block, Borders, Tabs};
+use ratatui::widgets::{Block, Borders, Clear, Tabs};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::tab_manager::TabManager;
@@ -37,6 +37,7 @@ impl Displayable for TabDisplay {
         ;
 
         let chunk = get_layout_chunks(f);
+        f.render_widget(Clear, chunk[1]);
         f.render_widget(tabs, chunk[1]);
     }
 

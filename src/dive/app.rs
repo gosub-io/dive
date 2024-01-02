@@ -68,17 +68,6 @@ impl App {
         self.status_bar.borrow_mut().set_status(status);
     }
 
-    // pub(crate) fn show_display_object(&mut self, id: &str) {
-    //     if let Some(display_object) = self.find_display_object_mut(id) {
-    //         display_object.show = true;
-    //     }
-    // }
-    // pub(crate) fn hide_display_object(&mut self, id: &str) {
-    //     if let Some(display_object) = self.find_display_object_mut(id) {
-    //         display_object.show = false;
-    //     }
-    // }
-
     pub(crate) fn handle_events(&self, app: AppRef) -> anyhow::Result<()> {
         if ! event::poll(std::time::Duration::from_millis(250))? {
             return Ok(());
@@ -101,13 +90,20 @@ impl App {
 
     // Renders the screen, and all display objects
     pub(crate) fn render(&self, app: AppRef, f: &mut Frame) {
-        // Render all showable display objects
-        for display_object in app.borrow().obj_manager.borrow().objects.iter() {
-            if !display_object.visible {
-                continue;
+        let mut objs = Vec::new();
+
+        // Fetch all visible objects
+        let binding = &app.borrow().obj_manager;
+        let binding = binding.borrow();
+        for display_object in binding.objects.iter() {
+            if display_object.visible {
+                objs.push(display_object);
             }
+        }
+
+        // Render all visible display objects
+        for display_object in objs.iter() {
             display_object.render(app.clone(), f);
-            // display_object.object.borrow_mut().render(app.clone(), f);
         }
     }
 
