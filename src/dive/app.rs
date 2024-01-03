@@ -1,102 +1,124 @@
 use std::cell::RefCell;
 use std::rc::Rc;
+use crossterm::event;
 use crossterm::event::KeyCode::Char;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use crate::dive;
-use crate::dive::display_objects::menu::MenuBar;
-use crate::dive::display_objects::status::StatusBar;
-use crate::dive::obj_manager::{DisplayObject, DisplayObjectManager};
-use crate::dive::tab_manager::TabManager;
-
-pub type AppRef = Rc<RefCell<App>>;
-
-pub struct AppVars {
-    /// True when the application should exit
-    pub should_quit: bool,
-}
+use crossterm::event::Event::Key;
+use crate::dive::command_queue::{Command, CommandQueue};
+use crate::dive::widget_manager::{Widget, WidgetManager};
+use crate::dive::widgets::help::Help;
+use crate::dive::widgets::menu_bar::MenuBar;
+use crate::dive::widgets::status_bar::StatusBar;
+use crate::dive::widgets::tab_manager::TabManager;
+use crate::dive::widgets::test::TestWidget;
 
 pub struct App {
-    pub vars: AppVars,
-    /// Manager for display objects
-    pub obj_manager: Rc<RefCell<DisplayObjectManager>>,
-    /// Status bar object
+    pub should_quit: bool,
+
+    pub command_queue: CommandQueue,
+
     pub status_bar: Rc<RefCell<StatusBar>>,
-    /// Menu bar object
     pub menu_bar: Rc<RefCell<MenuBar>>,
-    /// TabLayout object
     pub tab_manager: Rc<RefCell<TabManager>>,
+    pub widget_manager: WidgetManager,
 }
 
 impl App {
-    pub fn new() -> AppRef {
-        let status_bar = Rc::new(RefCell::new(StatusBar::new()));
-        let menu_bar = Rc::new(RefCell::new(MenuBar::new()));
-        let tab_manager = Rc::new(RefCell::new(TabManager::new()));
-        let obj_manager = Rc::new(RefCell::new(DisplayObjectManager::new()));
+    pub fn new() -> Self {
 
-        let app = App {
-            vars: AppVars {
-                should_quit: false
-            },
-            status_bar: status_bar.clone(),
-            menu_bar: menu_bar.clone(),
-            tab_manager: tab_manager.clone(),
-            obj_manager: obj_manager.clone(),
+        let mut app = Self {
+            should_quit: false,
+
+            status_bar: Rc::new(RefCell::new(StatusBar::new())),
+            menu_bar: Rc::new(RefCell::new(MenuBar::new())),
+            tab_manager: Rc::new(RefCell::new(TabManager::new())),
+
+            widget_manager: WidgetManager::new(),
+            command_queue: CommandQueue::new(),
         };
 
-        let app_ref = Rc::new(RefCell::new(app));
+        // Add the main widgets
+        let w1 = Widget::new("statusbar", 0, true, app.status_bar.clone());
+        app.widget_manager.add(w1);
+        let w1 = Widget::new("menubar", 0, true, app.menu_bar.clone());
+        app.widget_manager.add(w1);
+        let w1 = Widget::new("tabs", 0, true, app.tab_manager.clone());
+        app.widget_manager.add(w1);
 
-        let tab_display_obj= Rc::new(RefCell::new(dive::display_objects::tab_display::TabDisplay::new(tab_manager.clone())));
+        // Add some test widgets
+        let inner = Help::new();
+        let w1 = Widget::new("help", 255, false, Rc::new(RefCell::new(inner)));
+        app.widget_manager.add(w1);
 
-        // Add display objects
-        {
-            let binding = app_ref.borrow();
-            let mut obj_manager = binding.obj_manager.borrow_mut();
-            obj_manager.add(DisplayObject::new("menu", 128, menu_bar.clone(), true));
-            obj_manager.add(DisplayObject::new("status", 128, status_bar.clone(), true));
-            obj_manager.add(DisplayObject::new("tabs", 0, tab_display_obj.clone(), true));
+        let inner = TestWidget::new("dos/4gw");
+        let w2 = Widget::new("test1", 128, false, Rc::new(RefCell::new(inner)));
+        app.widget_manager.add(w2);
 
-            let test = Rc::new(RefCell::new(dive::display_objects::test::TestDisplayObject::new()));
-            obj_manager.add(DisplayObject::new("test", 64, test.clone(), false));
+        let inner = TestWidget::new("freebsd");
+        let w3 = Widget::new("test2", 64, false, Rc::new(RefCell::new(inner)));
+        app.widget_manager.add(w3);
 
-            let help = Rc::new(RefCell::new(dive::display_objects::help::HelpDisplayObject::new()));
-            obj_manager.add(DisplayObject::new("help", 0, help.clone(), false));
-        }
-
-        app_ref
+        app
     }
 
-    // pub(crate) fn set_status(&mut self, status: &str) {
-    //     self.status_bar.borrow_mut().status(status);
-    // }
+    pub(crate) fn handle_events(&mut self) -> anyhow::Result<()> {
+        if ! event::poll(std::time::Duration::from_millis(250))? {
+            return Ok(());
+        }
+
+        if let Key(key) = event::read()? {
+            if key.kind != event::KeyEventKind::Press {
+                return Ok(())
+            }
+
+            let mut handle_as_unfocussed = true;
+            match self.widget_manager.focussed() {
+                Some(widget) => {
+                    match widget.inner.borrow_mut().event_handler(&mut self.command_queue, key) {
+                        Ok(Some(_)) => {
+                            handle_as_unfocussed = false;
+                        },
+                        _ => {}
+                    }
+                },
+                None => {}
+            }
+
+            if handle_as_unfocussed {
+                self.process_key(key)?;
+            }
+
+            // self.widget_manager.find("help").unwrap().inner.event_handler(&mut self.command_queue, key)?;
+        }
+
+        Ok(())
+    }
 
     /// Main key handling
-    pub(crate) fn process_key(&mut self, _app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
+    fn process_key(&mut self, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
             Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_digit(10) => {
                 if let Some(digit) = c.to_digit(10) {
-                    {
-                        let mut tab_manager = self.tab_manager.borrow_mut();
-                        tab_manager.switch(digit as usize);
-                    }
+                    self.tab_manager.borrow_mut().switch(digit as usize);
                     self.status_bar.borrow_mut().status(format!("Switched to tab {}", digit).as_str());
                 }
             },
             Char('t') | KeyCode::F(1) => {
-                self.obj_manager.borrow_mut().visible("help", true);
-                self.obj_manager.borrow_mut().activate("help");
+                self.command_queue.push(Command::ShowWidget{id: "help".into(), focus: true});
             }
             KeyCode::F(2) => {
-                self.obj_manager.borrow_mut().toggle_visible("test");
-                self.obj_manager.borrow_mut().activate("test");
+                self.command_queue.push(Command::ToggleWidget{id: "test1".into(), focus: false});
+            }
+            KeyCode::F(3) => {
+                self.command_queue.push(Command::ToggleWidget{id: "test2".into(), focus: false});
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
+            KeyCode::Tab if key.modifiers.contains(KeyModifiers::SHIFT) => {
+                let idx = self.tab_manager.borrow_mut().prev();
+                self.status_bar.borrow_mut().status(format!("Switched to tab {}", idx).as_str());
+            },
             KeyCode::Tab => {
-                let idx;
-                {
-                    let mut tab_manager = self.tab_manager.borrow_mut();
-                    idx = tab_manager.next();
-                }
+                let idx = self.tab_manager.borrow_mut().next();
                 self.status_bar.borrow_mut().status(format!("Switched to tab {}", idx).as_str());
             },
             // Char('i') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -104,36 +126,49 @@ impl App {
             //     self.popup = true;
             // }
             Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                let tab_count = self.tab_manager.borrow().tab_count();
-
-                if tab_count == 1 {
+                if self.tab_manager.borrow().len() == 1 {
                     self.status_bar.borrow_mut().status("Can't close last tab");
                     return Ok(());
                 }
 
-                let idx;
-                {
-                    let mut tab_manager = self.tab_manager.borrow_mut();
-                    idx = tab_manager.current;
-                    tab_manager.close(idx);
-                }
+                let idx = self.tab_manager.borrow().current;
+                self.tab_manager.borrow_mut().close(idx);
                 self.status_bar.borrow_mut().status(format!("Closed tab {}", idx).as_str());
             },
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                let idx;
-                {
-                    let mut tab_manager = self.tab_manager.borrow_mut();
-                    idx = tab_manager.add_tab("New Tab", "gosub://blank");
-                    tab_manager.switch(idx);
-                }
+                let idx = self.tab_manager.borrow_mut().open("New Tab", "gosub://blank");
+                self.tab_manager.borrow_mut().switch(idx);
                 self.status_bar.borrow_mut().status(format!("Opened new tab {}", idx).as_str());
             },
 
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                self.vars.should_quit = true;
+                self.command_queue.push(Command::Quit);
             }
             _ => {},
         }
         Ok(())
+    }
+
+    pub(crate) fn process_commands(&mut self) {
+        loop {
+            match self.command_queue.pending() {
+                Some(Command::Quit) => {
+                    self.should_quit = true;
+                    break;
+                },
+                Some(Command::ShowWidget{id, focus}) => {
+                    self.widget_manager.show(&id, focus);
+                },
+                Some(Command::HideWidget{id}) => {
+                    self.widget_manager.hide(&id);
+                },
+                Some(Command::ToggleWidget{id, focus}) => {
+                    self.widget_manager.toggle(&id, focus);
+                },
+                Some(Command::FocusWidget { .. }) => {}
+                Some(Command::UnfocusWidget { .. }) => {}
+                None => break,
+            }
+        }
     }
 }
