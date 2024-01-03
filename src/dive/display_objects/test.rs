@@ -2,7 +2,7 @@ use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, BorderType, Clear, Paragraph};
-use crate::dive::app::AppRef;
+use crate::dive::app::{App, AppRef};
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
 
@@ -15,7 +15,7 @@ impl TestDisplayObject {
 }
 
 impl Displayable for TestDisplayObject {
-    fn render(&mut self, _app: AppRef, f: &mut Frame) {
+    fn render(&mut self, app: App, f: &mut Frame) {
         let block = Block::new()
             .title("Test")
             .borders(Borders::ALL)
@@ -34,15 +34,15 @@ impl Displayable for TestDisplayObject {
         f.render_widget(paragraph, area);
     }
 
-    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(&mut self, app: App, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
 
-    fn on_show(&mut self, app: AppRef) {
-        app.borrow().status_bar.borrow_mut().status("Opened test screen");
+    fn on_show(&mut self, app: App) {
+        app.status_bar.status("Opened test screen");
     }
 
-    fn on_hide(&mut self, app: AppRef) {
-        app.borrow().status_bar.borrow_mut().status("Closed test screen");
+    fn on_hide(&mut self, app: App) {
+        app.status_bar.status("Closed test screen");
     }
 }

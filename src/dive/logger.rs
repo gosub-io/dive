@@ -1,13 +1,11 @@
-use std::rc::Rc;
-use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
-
+#[allow(dead_code)]
 struct Logger {
     logs: Vec<String>,
     max_entries: usize,
 }
 
 impl Logger {
+    #[allow(dead_code)]
     pub fn new(max_entries: usize) -> Self {
         Self {
             logs: vec![],
@@ -15,6 +13,7 @@ impl Logger {
         }
     }
 
+    #[allow(dead_code)]
     pub fn log(&mut self, msg: &str) {
         self.logs.push(msg.into());
         if self.logs.len() > self.max_entries {
