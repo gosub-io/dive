@@ -15,11 +15,11 @@ This is the help screen for Gosub Dive. It is a work in progress and displays th
  #2Function keys
  #2-------------
   #1F1#0      Display this help screen
-  #1F2#0      Open tab list
+  #1F2#0      Opens tab list
   #1F3#0
   #1F4#0
   #1F5#0
-  #1F6#0
+  #1F6#0      Opens log screen
   #1F7#0      Opens history menu
   #1F8#0      Opens bookmark menu
   #1F9#0      Opens top menu
@@ -178,6 +178,8 @@ impl Displayable for HelpDisplayObject {
     fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
+                // app.borrow().visible("help", false);
+                // app.borrow().deactivate();
                 app.borrow().obj_manager.borrow_mut().visible("help", false);
                 app.borrow().obj_manager.borrow_mut().deactivate();
             }

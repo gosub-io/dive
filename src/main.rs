@@ -53,7 +53,7 @@ fn handle_events(app: AppRef) -> Result<()> {
         let res;
         {
             let binding = app.borrow();
-            let obj_manager = binding.obj_manager.borrow();
+            let obj_manager = binding.obj_manager.borrow_mut();
 
             let active = obj_manager.active().clone();
             match active {
