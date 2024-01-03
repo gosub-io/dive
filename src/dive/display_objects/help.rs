@@ -179,6 +179,7 @@ impl Displayable for HelpDisplayObject {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
                 app.borrow().obj_manager.borrow_mut().visible("help", false);
+                app.borrow().obj_manager.borrow_mut().deactivate();
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
@@ -188,7 +189,7 @@ impl Displayable for HelpDisplayObject {
                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
             },
-            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.borrow_mut().should_quit = true,
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.borrow_mut().vars.should_quit = true,
             _ => {}
         }
 
@@ -197,11 +198,11 @@ impl Displayable for HelpDisplayObject {
 
     fn on_show(&mut self, app: AppRef) {
         self.vertical_scroll = 0;
-        app.borrow_mut().set_status("Opened help screen");
+        app.borrow().status_bar.borrow_mut().status("Opened help screen");
     }
 
     fn on_hide(&mut self, app: AppRef) {
-        app.borrow_mut().set_status("Closed help screen");
+        app.borrow().status_bar.borrow_mut().status("Closed help screen");
     }
 }
 

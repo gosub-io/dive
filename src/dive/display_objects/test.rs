@@ -39,10 +39,10 @@ impl Displayable for TestDisplayObject {
     }
 
     fn on_show(&mut self, app: AppRef) {
-        app.borrow_mut().set_status("Opened test screen");
+        app.borrow().status_bar.borrow_mut().status("Opened test screen");
     }
 
     fn on_hide(&mut self, app: AppRef) {
-        app.borrow_mut().set_status("Closed test screen");
+        app.borrow().status_bar.borrow_mut().status("Closed test screen");
     }
 }

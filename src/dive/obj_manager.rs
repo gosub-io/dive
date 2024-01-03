@@ -20,38 +20,30 @@ pub struct DisplayObject {
     /// Does this object need to be rendered
     pub visible: bool,
     /// Actual object with rendering and event handling
-    pub object: Rc<RefCell<dyn Displayable>>,
+    pub inner: Rc<RefCell<dyn Displayable>>,
 }
 
 impl DisplayObject {
-    pub fn new(id: &str, priority: u8, object: Rc<RefCell<dyn Displayable>>, visible: bool) -> Self {
+    pub fn new(id: &str, priority: u8, inner: Rc<RefCell<dyn Displayable>>, visible: bool) -> Self {
         Self {
             id: id.into(),
             priority,
             visible,
-            object,
+            inner,
         }
-    }
-
-    pub(crate) fn event_handler(&self, app: AppRef, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
-        self.object.borrow_mut().event_handler(app.clone(), key)
-    }
-
-    pub(crate) fn render(&self, app: AppRef, f: &mut Frame) {
-        self.object.borrow_mut().render(app, f)
     }
 }
 
 pub struct DisplayObjectManager {
     pub objects: Vec<DisplayObject>,
-    active_display_object_index: usize,
+    active_display_object_index: Option<usize>,
 }
 
 impl DisplayObjectManager {
-pub fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             objects: vec![],
-            active_display_object_index: 0,
+            active_display_object_index: None,
         }
     }
 
@@ -61,8 +53,12 @@ pub fn new() -> Self {
         self.objects.sort_by(|a, b| a.priority.cmp(&b.priority));
     }
 
-    pub fn active(&self) -> &DisplayObject {
-        &self.objects[self.active_display_object_index]
+    pub fn active(&self) -> Option<&DisplayObject> {
+        if self.active_display_object_index.is_none() {
+            return None;
+        }
+
+        Some(&self.objects[self.active_display_object_index.unwrap()])
     }
 
     pub fn find(&mut self, id: &str) -> Option<&mut DisplayObject> {
@@ -79,9 +75,13 @@ pub fn new() -> Self {
     pub(crate) fn activate(&mut self, id: &str) {
         for (idx, display_object) in self.objects.iter_mut().enumerate() {
             if display_object.id == id {
-                self.active_display_object_index = idx;
+                self.active_display_object_index = Some(idx);
             }
         }
+    }
+
+    pub(crate) fn deactivate(&mut self) {
+        self.active_display_object_index = None;
     }
 
     pub(crate) fn visible(&mut self, id: &str, visibility: bool) {

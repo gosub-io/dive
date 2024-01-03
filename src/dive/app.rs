@@ -1,10 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use crossterm::event;
 use crossterm::event::KeyCode::Char;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use crossterm::event::Event::Key;
-use ratatui::Frame;
 use crate::dive;
 use crate::dive::display_objects::menu::MenuBar;
 use crate::dive::display_objects::status::StatusBar;
@@ -13,11 +10,15 @@ use crate::dive::tab_manager::TabManager;
 
 pub type AppRef = Rc<RefCell<App>>;
 
-pub struct App {
+pub struct AppVars {
     /// True when the application should exit
     pub should_quit: bool,
+}
+
+pub struct App {
+    pub vars: AppVars,
     /// Manager for display objects
-    pub obj_manager: Rc<RefCell<dive::obj_manager::DisplayObjectManager>>,
+    pub obj_manager: Rc<RefCell<DisplayObjectManager>>,
     /// Status bar object
     pub status_bar: Rc<RefCell<StatusBar>>,
     /// Menu bar object
@@ -34,8 +35,9 @@ impl App {
         let obj_manager = Rc::new(RefCell::new(DisplayObjectManager::new()));
 
         let app = App {
-            should_quit: false,
-
+            vars: AppVars {
+                should_quit: false
+            },
             status_bar: status_bar.clone(),
             menu_bar: menu_bar.clone(),
             tab_manager: tab_manager.clone(),
@@ -64,87 +66,39 @@ impl App {
         app_ref
     }
 
-    pub(crate) fn set_status(&mut self, status: &str) {
-        self.status_bar.borrow_mut().set_status(status);
-    }
-
-    pub(crate) fn handle_events(&self, app: AppRef) -> anyhow::Result<()> {
-        if ! event::poll(std::time::Duration::from_millis(250))? {
-            return Ok(());
-        }
-
-        if let Key(key) = event::read()? {
-            if key.kind != event::KeyEventKind::Press {
-                return Ok(())
-            }
-
-            let res = app.borrow().obj_manager.borrow_mut().active().event_handler(app.clone(), key)?;
-            if res.is_none() {
-                // The display object did not handle the key, so we should handle it
-                self.process_key(app.clone(), key)?;
-            }
-        }
-
-        Ok(())
-    }
-
-    // Renders the screen, and all display objects
-    pub(crate) fn render(&self, app: AppRef, f: &mut Frame) {
-        let mut objs = Vec::new();
-
-        // Fetch all visible objects
-        let binding = &app.borrow().obj_manager;
-        let binding = binding.borrow();
-        for display_object in binding.objects.iter() {
-            if display_object.visible {
-                objs.push(display_object);
-            }
-        }
-
-        // Render all visible display objects
-        for display_object in objs.iter() {
-            display_object.render(app.clone(), f);
-        }
-    }
+    // pub(crate) fn set_status(&mut self, status: &str) {
+    //     self.status_bar.borrow_mut().status(status);
+    // }
 
     /// Main key handling
-    fn process_key(&self, app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
+    pub(crate) fn process_key(&mut self, _app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
             Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_digit(10) => {
                 if let Some(digit) = c.to_digit(10) {
                     {
-                        let app = app.borrow();
-                        let mut tab_manager = app.tab_manager.borrow_mut();
+                        let mut tab_manager = self.tab_manager.borrow_mut();
                         tab_manager.switch(digit as usize);
                     }
-                    app.borrow().status_bar.borrow_mut().set_status(format!("Switched to tab {}", digit).as_str());
+                    self.status_bar.borrow_mut().status(format!("Switched to tab {}", digit).as_str());
                 }
             },
             Char('t') | KeyCode::F(1) => {
-                // {
-                //     let bm = app.borrow();
-                //     let obj = bm.find_display_object_mut("help").unwrap();
-                //     obj.show = !obj.show;
-                // }
-
-                app.borrow().obj_manager.borrow_mut().visible("help", true);
-                app.borrow().obj_manager.borrow_mut().activate("help");
+                self.obj_manager.borrow_mut().visible("help", true);
+                self.obj_manager.borrow_mut().activate("help");
             }
             KeyCode::F(2) => {
-                app.borrow().obj_manager.borrow_mut().toggle_visible("test");
-                app.borrow().obj_manager.borrow_mut().activate("test");
+                self.obj_manager.borrow_mut().toggle_visible("test");
+                self.obj_manager.borrow_mut().activate("test");
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
             KeyCode::Tab => {
                 let idx;
                 {
-                    let bm = app.borrow_mut();
-                    let mut tab_manager = bm.tab_manager.borrow_mut();
+                    let mut tab_manager = self.tab_manager.borrow_mut();
                     idx = tab_manager.next();
                 }
-                app.borrow_mut().set_status(format!("Switched to tab {}", idx).as_str());
+                self.status_bar.borrow_mut().status(format!("Switched to tab {}", idx).as_str());
             },
-
             // Char('i') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             //     // change the name of the current tab
             //     self.popup = true;
@@ -152,17 +106,18 @@ impl App {
             Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let tab_count = self.tab_manager.borrow().tab_count();
 
-                if tab_count > 1 {
-                    let idx;
-                    {
-                        let mut tab_manager = self.tab_manager.borrow_mut();
-                        idx = tab_manager.current;
-                        tab_manager.close(idx);
-                    }
-                    app.borrow_mut().set_status(format!("Closed tab {}", idx).as_str());
-                } else {
-                    app.borrow_mut().set_status("Can't close last tab");
+                if tab_count == 1 {
+                    self.status_bar.borrow_mut().status("Can't close last tab");
+                    return Ok(());
                 }
+
+                let idx;
+                {
+                    let mut tab_manager = self.tab_manager.borrow_mut();
+                    idx = tab_manager.current;
+                    tab_manager.close(idx);
+                }
+                self.status_bar.borrow_mut().status(format!("Closed tab {}", idx).as_str());
             },
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let idx;
@@ -171,11 +126,11 @@ impl App {
                     idx = tab_manager.add_tab("New Tab", "gosub://blank");
                     tab_manager.switch(idx);
                 }
-                app.borrow_mut().set_status(format!("Opened new tab {}", idx).as_str());
+                self.status_bar.borrow_mut().status(format!("Opened new tab {}", idx).as_str());
             },
 
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                app.borrow_mut().should_quit = true;
+                self.vars.should_quit = true;
             }
             _ => {},
         }

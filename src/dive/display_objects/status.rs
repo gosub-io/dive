@@ -16,7 +16,7 @@ impl StatusBar {
         }
     }
 
-    pub fn set_status(&mut self, status: &str) {
+    pub fn status(&mut self, status: &str) {
         self.status = status.to_string();
     }
 }
