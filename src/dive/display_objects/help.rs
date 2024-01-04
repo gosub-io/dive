@@ -3,8 +3,8 @@ use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
-use crate::dive::app::AppRef;
-use crate::dive::obj_manager::Displayable;
+use crate::dive::app::App;
+use crate::dive::widget_manager::Widget;
 
 const HELPTEXT: &'static str = r#"
 
@@ -106,24 +106,29 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     lines
 }
 
-pub struct HelpDisplayObject {
+pub struct HelpComponent {
     pub vertical_scroll_state: ScrollbarState,
     pub vertical_scroll: usize,
     pub vertical_scroll_max: usize,
+    pub content: Vec<Line<'static>>,
 }
 
-impl HelpDisplayObject {
+impl HelpComponent {
     pub fn new() -> Self {
+        // generate help text, based on #N coloring
+        let help_lines = generate_lines_from_helptext();
+
         Self {
             vertical_scroll_state: ScrollbarState::default(),
             vertical_scroll: 0,
-            vertical_scroll_max: 0,
+            vertical_scroll_max: help_lines.len(),
+            content: help_lines,
         }
     }
 }
 
-impl Displayable for HelpDisplayObject {
-    fn render(&mut self, _app: AppRef, f: &mut Frame) {
+impl Widget for HelpComponent {
+    fn render(&mut self, _app: &mut App, f: &mut Frame) {
         let size = f.size();
         let margins = Layout::default()
             .direction(Direction::Vertical)
@@ -151,12 +156,7 @@ impl Displayable for HelpDisplayObject {
             .padding(Padding::uniform(1))
             ;
 
-        // generate help text, based on #N coloring
-        let help_lines = generate_lines_from_helptext();
-        self.vertical_scroll_max = help_lines.len();
-        self.vertical_scroll_state = self.vertical_scroll_state.content_length(self.vertical_scroll_max);
-
-        let help_paragraph = Paragraph::new(Text::from(help_lines))
+        let help_paragraph = Paragraph::new(Text::from(self.content.clone()))
             .block(help_block)
             .wrap(Wrap { trim: false })
             .scroll((self.vertical_scroll as u16, 0))
@@ -175,13 +175,11 @@ impl Displayable for HelpDisplayObject {
         );
     }
 
-    fn event_handler(&mut self, app: AppRef, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
-                // app.borrow().visible("help", false);
-                // app.borrow().deactivate();
-                app.borrow().obj_manager.borrow_mut().visible("help", false);
-                app.borrow().obj_manager.borrow_mut().deactivate();
+                app.widget_manager.hide("help");
+                app.widget_manager.unfocus("help");
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
@@ -191,20 +189,19 @@ impl Displayable for HelpDisplayObject {
                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
             },
-            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.borrow_mut().vars.should_quit = true,
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
             _ => {}
         }
 
         Ok(Some(key))
     }
 
-    fn on_show(&mut self, app: AppRef) {
-        self.vertical_scroll = 0;
-        app.borrow().status_bar.borrow_mut().status("Opened help screen");
+    fn on_show(&mut self, app: &mut App) {
+        app.status_bar.status("Opened help screen");
     }
 
-    fn on_hide(&mut self, app: AppRef) {
-        app.borrow().status_bar.borrow_mut().status("Closed help screen");
+    fn on_hide(&mut self, app: &mut App) {
+        app.status_bar.status("Closed help screen");
     }
 }
 

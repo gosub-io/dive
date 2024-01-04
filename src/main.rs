@@ -1,9 +1,7 @@
 use anyhow::Result;
-use crossterm::{event, execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
-use crossterm::event::Event::Key;
-use ratatui::Frame;
+use crossterm::{execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
 use ratatui::prelude::{CrosstermBackend, Terminal};
-use crate::dive::app::{App, AppRef};
+use crate::dive::app::App;
 
 mod dive;
 
@@ -19,20 +17,20 @@ fn shutdown() -> Result<()> {
     Ok(())
 }
 
-fn run(app: AppRef) -> Result<()> {
+fn run(app: &mut App) -> Result<()> {
     let mut t = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
     let _ = t.clear()?;
 
     loop {
         t.draw(|f| {
-            render(app.clone(), f);
+            app.render(f);
         })?;
 
         // application update
-        handle_events(app.clone())?;
+        app.handle_events()?;
 
         // application exit
-        if app.borrow().vars.should_quit {
+        if app.should_quit {
             break;
         }
     }
@@ -40,37 +38,43 @@ fn run(app: AppRef) -> Result<()> {
     Ok(())
 }
 
-fn handle_events(app: AppRef) -> Result<()> {
-
-}
-
-fn render(app: AppRef, f: &mut Frame) {
-    let mut objs = Vec::new();
-
-    // Fetch all visible objects
-    let binding = app.borrow();
-    let binding = binding.obj_manager.borrow();
-    for display_object in binding.objects.iter() {
-        if display_object.visible {
-            objs.push(display_object);
-        }
-    }
-
-    // Render all visible display objects
-    for display_object in objs.iter() {
-        display_object.inner.borrow_mut().render(app.clone(), f);
-    }
-}
+// fn handle_events(app: &mut App) -> Result<()> {
+//     if event::poll(std::time::Duration::from_millis(100))? {
+//         if let event::Event::Key(key) = event::read()? {
+//             app.handle_event(key)?;
+//         }
+//     }
+//
+//     Ok(())
+// }
+//
+// fn render(app: &mut App, f: &mut Frame) {
+//     let mut objs = Vec::new();
+//
+//     // Fetch all visible objects
+//     let binding = app.borrow();
+//     let binding = binding.obj_manager.borrow();
+//     for display_object in binding.objects.iter() {
+//         if display_object.visible {
+//             objs.push(display_object);
+//         }
+//     }
+//
+//     // Render all visible display objects
+//     for display_object in objs.iter() {
+//         display_object.inner.borrow_mut().render(app.clone(), f);
+//     }
+// }
 
 fn main() -> Result<()> {
-    let app = App::new();
+    let mut app = App::new();
 
-    app.borrow().tab_manager.borrow_mut().add_tab("New Tab", "gosub://blank");
-    app.borrow().tab_manager.borrow_mut().add_tab("Second Tab", "https://gosub.io");
-    app.borrow().tab_manager.borrow_mut().add_tab("Third Tab", "https://news.ycombinator.com");
+    app.tab_manager.open("New Tab", "gosub://blank");
+    app.tab_manager.open("Second Tab", "https://gosub.io");
+    app.tab_manager.open("Third Tab", "https://news.ycombinator.com");
 
     startup()?;
-    let status = run(app.clone());
+    let status = run(&mut app);
     shutdown()?;
     status?;
     Ok(())

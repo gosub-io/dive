@@ -1,3 +1,7 @@
+use ratatui::Frame;
+use ratatui::widgets::{Block, Borders, Clear, Tabs};
+use crate::dive::ui::get_layout_chunks;
+
 pub struct Tab {
     pub name: String,
     pub url: String,
@@ -17,7 +21,7 @@ impl TabManager {
         }
     }
 
-    pub fn add_tab(&mut self, name: &str, url: &str) -> usize {
+    pub fn open(&mut self, name: &str, url: &str) -> usize {
         let tab = Tab {
             name: name.into(),
             url: url.into(),
@@ -60,7 +64,27 @@ impl TabManager {
         }
     }
 
-    pub fn tab_count(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.tabs.len()
+    }
+
+    pub fn render(&self, f: &mut Frame) {
+        let mut tab_names = Vec::new();
+        for (idx, tab) in self.tabs.iter().enumerate() {
+            tab_names.push(format!(" {}:{} ", idx, tab.name.clone()));
+        }
+
+        let tabs = Tabs::new(tab_names)
+            .block(Block::default().borders(Borders::NONE))
+            // .style(Style::default().white())
+            // .highlight_style(Style::default().yellow())
+            .select(self.current)
+            .divider("|")
+            .padding("", "")
+            ;
+
+        let chunk = get_layout_chunks(f);
+        f.render_widget(Clear, chunk[1]);
+        f.render_widget(tabs, chunk[1]);
     }
 }
