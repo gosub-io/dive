@@ -12,8 +12,7 @@ use crate::dive::widgets::tab_manager::TabManager;
 
 pub enum AppState {
     Normal,
-    // HelpPopup,
-    // MenuActive,
+    Help,
 }
 
 pub struct App {
@@ -48,6 +47,7 @@ impl App {
 
         app
     }
+
     pub(crate) fn render(&mut self, f: &mut Frame) {
         self.tab_manager.render(f);
         self.status_bar.render(f);
@@ -66,7 +66,17 @@ impl App {
                 return Ok(())
             }
 
-            self.process_key(key)?;
+            match self.state {
+                AppState::Normal => {
+                    self.process_key(key)?;
+                },
+                // AppState::HelpPopup => {
+                //     self.process_key(key)?;
+                // },
+                AppState::Help => {
+                    self.widget_manager.find("help").unwrap().inner.event_handler(self, key)?;
+                },
+            }
         }
 
         Ok(())
@@ -82,6 +92,7 @@ impl App {
                 }
             },
             Char('t') | KeyCode::F(1) => {
+                self.state = AppState::Menu;
                 self.widget_manager.show("help");
                 self.widget_manager.focus("help");
             }

@@ -3,7 +3,7 @@ use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
-use crate::dive::app::App;
+use crate::dive::app::{App, AppState};
 use crate::dive::widget_manager::Widget;
 
 const HELPTEXT: &'static str = r#"
@@ -178,6 +178,7 @@ impl Widget for HelpComponent {
     fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
+                app.state = AppState::Normal;
                 app.widget_manager.hide("help");
                 app.widget_manager.unfocus("help");
             }
