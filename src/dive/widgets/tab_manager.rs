@@ -1,6 +1,8 @@
 use ratatui::Frame;
 use ratatui::widgets::{Block, Borders, Clear, Tabs};
+use crate::dive::app::App;
 use crate::dive::ui::get_layout_chunks;
+use crate::dive::widget_manager::Drawable;
 
 pub struct Tab {
     pub name: String,
@@ -67,8 +69,10 @@ impl TabManager {
     pub fn len(&self) -> usize {
         self.tabs.len()
     }
+}
 
-    pub fn render(&self, f: &mut Frame) {
+impl Drawable for TabManager {
+    fn render(&mut self, _app: &mut App, f: &mut Frame) {
         let mut tab_names = Vec::new();
         for (idx, tab) in self.tabs.iter().enumerate() {
             tab_names.push(format!(" {}:{} ", idx, tab.name.clone()));

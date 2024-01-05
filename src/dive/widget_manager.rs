@@ -1,15 +1,14 @@
-use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use crate::dive::app::App;
 
-pub trait Widget {
+pub trait Drawable {
     fn render(&mut self, app: &mut App, f: &mut Frame);
-    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>>;
-    fn on_show(&mut self, app: &mut App);
-    fn on_hide(&mut self, app: &mut App);
+    // fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>>;
+    // fn on_show(&mut self, app: &mut App);
+    // fn on_hide(&mut self, app: &mut App);
 }
 
-pub struct WidgetObject {
+pub struct Widget {
     /// Unique identifier for this widget
     pub id: String,
     /// 0 is the highest, 255 is the lowest
@@ -17,11 +16,11 @@ pub struct WidgetObject {
     /// Does this object need to be rendered
     pub visible: bool,
     /// Actual object with rendering and event handling
-    pub inner: Box<dyn Widget>,
+    pub inner: Box<dyn Drawable>,
 }
 
-impl WidgetObject {
-    pub fn new(id: &str, priority: u8, inner: Box<dyn Widget>, visible: bool) -> Self {
+impl Widget {
+    pub fn new(id: &str, priority: u8, visible: bool, inner: Box<dyn Drawable>) -> Self {
         Self {
             id: id.into(),
             priority,
@@ -29,10 +28,32 @@ impl WidgetObject {
             inner,
         }
     }
+
+    pub fn hide(&mut self) {
+        self.visible = false;
+    }
+
+    pub fn show(&mut self) {
+        self.visible = true;
+    }
+
+    pub fn toggle(&mut self) {
+        self.visible = !self.visible;
+    }
+
+    pub fn priority(&mut self, priority: u8) {
+        self.priority = priority;
+    }
+
+    pub fn render(&mut self, app: &mut App, f: &mut Frame) {
+        if self.visible {
+            self.inner.render(app, f);
+        }
+    }
 }
 
 pub struct WidgetManager {
-    pub widgets: Vec<WidgetObject>,
+    pub widgets: Vec<Widget>,
     pub focus: Option<usize>,
 }
 
@@ -44,22 +65,22 @@ impl WidgetManager {
         }
     }
 
-    pub fn add(&mut self, widget: WidgetObject) {
+    pub fn add(&mut self, widget: Widget) {
         self.widgets.push(widget);
-
-        self.widgets.sort_by(|a, b| a.priority.cmp(&b.priority));
+        // self.widgets.push(Box::new(move |app: &mut App, f: &mut Frame| widget.render(app, f)));
+        // self.widgets.sort_by(|a, b| a.priority.cmp(&b.priority));
     }
 
-    #[allow(dead_code)]
-    pub fn active(&self) -> Option<&WidgetObject> {
-        if self.focus.is_none() {
-            return None;
-        }
+    // #[allow(dead_code)]
+    // pub fn active(&self) -> Option<&Widget<T>> {
+    //     if self.focus.is_none() {
+    //         return None;
+    //     }
+    //
+    //     Some(&self.widgets[self.focus.unwrap()])
+    // }
 
-        Some(&self.widgets[self.focus.unwrap()])
-    }
-
-    pub fn find(&mut self, id: &str) -> Option<&mut WidgetObject> {
+    pub fn find(&mut self, id: &str) -> Option<&mut Widget> {
         for widget_object in self.widgets.iter_mut() {
             if widget_object.id == id {
                 return Some(widget_object);
@@ -82,34 +103,9 @@ impl WidgetManager {
         self.focus = None;
     }
 
-    pub(crate) fn show(&mut self, id: &str) {
-        if let Some(widget_object) = self.find(id) {
-            widget_object.visible = true;
-        }
-    }
-
-    pub(crate) fn hide(&mut self, id: &str) {
-        if let Some(widget_object) = self.find(id) {
-            widget_object.visible = true;
-        }
-    }
-
-    pub(crate) fn toggle(&mut self, id:&str) {
-        if let Some(widget_object) = self.find(id) {
-            widget_object.visible = !widget_object.visible;
-        }
-    }
-
     pub(crate) fn render(&mut self, app: &mut App, f: &mut Frame) {
-        let mut objs = vec![];
-        for widget_object in self.widgets.iter() {
-            if widget_object.visible {
-                objs.push(widget_object);
-            }
-        }
-
-        for widget_object in objs.iter_mut() {
-            widget_object.inner.render(app, f);
+        for widget in &mut self.widgets {
+            widget.render(app, f);
         }
     }
 }

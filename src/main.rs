@@ -23,7 +23,7 @@ fn run(app: &mut App) -> Result<()> {
 
     loop {
         t.draw(|f| {
-            app.render(f);
+            app.widget_manager.render(&mut app, f);
         })?;
 
         // application update

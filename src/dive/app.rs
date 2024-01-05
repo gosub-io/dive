@@ -2,13 +2,12 @@ use crossterm::event;
 use crossterm::event::KeyCode::Char;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crossterm::event::Event::Key;
-use ratatui::Frame;
-use crate::dive::display_objects::help::HelpComponent;
-use crate::dive::display_objects::test::TestComponent;
-use crate::dive::widget_manager::{WidgetManager, WidgetObject};
+use crate::dive::widget_manager::{Widget, WidgetManager};
+use crate::dive::widgets::help::Help;
 use crate::dive::widgets::menu_bar::MenuBar;
 use crate::dive::widgets::status_bar::StatusBar;
 use crate::dive::widgets::tab_manager::TabManager;
+use crate::dive::widgets::test::TestWidget;
 
 pub enum AppState {
     Normal,
@@ -27,9 +26,8 @@ pub struct App {
 }
 
 impl App {
-    pub fn new() -> App {
-
-        let mut app = App {
+    pub fn new() -> Self {
+        let mut app = Self {
             should_quit: false,
             state: AppState::Normal,
 
@@ -39,22 +37,24 @@ impl App {
             widget_manager: WidgetManager::new(),
         };
 
-        let w1 = WidgetObject::new("help", 0, Box::new(HelpComponent::new()), false);
+        let inner = Help::new();
+        let w1 = Widget::new("help", 0, false, Box::new(inner));
         app.widget_manager.add(w1);
-        let w2 = WidgetObject::new("test1", 0, Box::new(TestComponent::new("dos/4gw")), false);
+
+        let inner = TestWidget::new("dos/4gw");
+        let w2 = Widget::new("test1", 0, false, Box::new(inner));
         app.widget_manager.add(w2);
-        let w3 = WidgetObject::new("test2", 0, Box::new(TestComponent::new("foobar!")), false);
+
+        let inner = TestWidget::new("freebsd");
+        let w3 = Widget::new("test2", 0, false, Box::new(inner));
         app.widget_manager.add(w3);
 
         app
     }
-    pub(crate) fn render(&mut self, f: &mut Frame) {
-        self.tab_manager.render(f);
-        self.status_bar.render(f);
-        self.menu_bar.render(f);
 
-        self.widget_manager.render(self, f);
-    }
+    // pub(crate) fn render(&mut self, f: &mut Frame) {
+    //     self.widget_manager.render(self, f);
+    // }
 
     pub(crate) fn handle_events(&mut self) -> anyhow::Result<()> {
         if ! event::poll(std::time::Duration::from_millis(250))? {
@@ -82,14 +82,14 @@ impl App {
                 }
             },
             Char('t') | KeyCode::F(1) => {
-                self.widget_manager.show("help");
-                self.widget_manager.focus("help");
+                self.widget_manager.find("help").unwrap().show();
+                // self.widget_manager.find("help").unwrap().focus();
             }
             KeyCode::F(2) => {
-                self.widget_manager.toggle("test1");
+                self.widget_manager.find("test1").unwrap().toggle();
             }
             KeyCode::F(3) => {
-                self.widget_manager.toggle("test2");
+                self.widget_manager.find("test2").unwrap().toggle();
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
             KeyCode::Tab if key.modifiers.contains(KeyModifiers::SHIFT) => {

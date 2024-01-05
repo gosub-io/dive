@@ -1,6 +1,8 @@
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
+use crate::dive::app::App;
 use crate::dive::ui::get_layout_chunks;
+use crate::dive::widget_manager::Drawable;
 
 pub struct MenuBar {
     pub active: bool,
@@ -19,8 +21,10 @@ impl MenuBar {
     pub fn set_active(&mut self, active: bool) {
         self.active = active;
     }
+}
 
-    pub fn render(&self, f: &mut Frame) {
+impl Drawable for MenuBar {
+    fn render(&mut self, _app: &mut App, f: &mut Frame) {
         let menu_items = vec![
             "File",
             "Edit",

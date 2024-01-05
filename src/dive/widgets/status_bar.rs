@@ -1,6 +1,8 @@
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
+use crate::dive::app::App;
 use crate::dive::ui::get_layout_chunks;
+use crate::dive::widget_manager::Drawable;
 
 pub struct StatusBar {
     pub status: String,
@@ -16,8 +18,10 @@ impl StatusBar {
     pub fn status(&mut self, status: &str) {
         self.status = status.to_string();
     }
+}
 
-    pub fn render(&self, f: &mut Frame) {
+impl Drawable for StatusBar {
+    fn render(&mut self, _app: &mut App, f: &mut Frame) {
         let chunks = get_layout_chunks(f);
 
         let status_bar = Paragraph::new(Line::from(vec![
