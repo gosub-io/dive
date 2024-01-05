@@ -11,8 +11,7 @@ use crate::dive::widgets::test::TestWidget;
 
 pub enum AppState {
     Normal,
-    // HelpPopup,
-    // MenuActive,
+    Help,
 }
 
 pub struct App {
@@ -52,10 +51,6 @@ impl App {
         app
     }
 
-    // pub(crate) fn render(&mut self, f: &mut Frame) {
-    //     self.widget_manager.render(self, f);
-    // }
-
     pub(crate) fn handle_events(&mut self) -> anyhow::Result<()> {
         if ! event::poll(std::time::Duration::from_millis(250))? {
             return Ok(());
@@ -66,7 +61,17 @@ impl App {
                 return Ok(())
             }
 
-            self.process_key(key)?;
+            match self.state {
+                AppState::Normal => {
+                    self.process_key(key)?;
+                },
+                // AppState::HelpPopup => {
+                //     self.process_key(key)?;
+                // },
+                AppState::Help => {
+                    self.widget_manager.find("help").unwrap().inner.event_handler(self, key)?;
+                },
+            }
         }
 
         Ok(())
@@ -82,8 +87,9 @@ impl App {
                 }
             },
             Char('t') | KeyCode::F(1) => {
-                self.widget_manager.find("help").unwrap().show();
-                // self.widget_manager.find("help").unwrap().focus();
+                self.state = AppState::Menu;
+                self.widget_manager.show("help");
+                self.widget_manager.focus("help");
             }
             KeyCode::F(2) => {
                 self.widget_manager.find("test1").unwrap().toggle();

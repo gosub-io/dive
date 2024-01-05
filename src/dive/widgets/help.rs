@@ -3,6 +3,7 @@ use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 use crate::dive::app::App;
 use crate::dive::widget_manager::Drawable;
+use crate::dive::app::{App, AppState};
 
 const HELPTEXT: &'static str = r#"
 
@@ -171,6 +172,36 @@ impl Drawable for Help {
             help_block_area,
             &mut self.vertical_scroll_state,
         );
+    }
+
+    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+        match key.code {
+            KeyCode::Esc | KeyCode::F(1) => {
+                app.state = AppState::Normal;
+                app.widget_manager.hide("help");
+                app.widget_manager.unfocus("help");
+            }
+            KeyCode::Down => {
+                self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
+                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
+            },
+            KeyCode::Up => {
+                self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
+                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
+            },
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
+            _ => {}
+        }
+
+        Ok(Some(key))
+    }
+
+    fn on_show(&mut self, app: &mut App) {
+        app.status_bar.status("Opened help screen");
+    }
+
+    fn on_hide(&mut self, app: &mut App) {
+        app.status_bar.status("Closed help screen");
     }
 }
 
