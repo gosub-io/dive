@@ -1,6 +1,7 @@
+use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::widgets::{Block, Borders, Clear, Tabs};
-use crate::dive::app::App;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
 
@@ -72,7 +73,7 @@ impl TabManager {
 }
 
 impl Drawable for TabManager {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, f: &mut Frame) {
         let mut tab_names = Vec::new();
         for (idx, tab) in self.tabs.iter().enumerate() {
             tab_names.push(format!(" {}:{} ", idx, tab.name.clone()));
@@ -91,4 +92,9 @@ impl Drawable for TabManager {
         f.render_widget(Clear, chunk[1]);
         f.render_widget(tabs, chunk[1]);
     }
+
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+        Ok(None)
+    }
+
 }

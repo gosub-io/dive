@@ -2,7 +2,7 @@ use crossterm::event::KeyEvent;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, BorderType, Clear, Paragraph};
-use crate::dive::app::App;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::centered_rect;
 use crate::dive::widget_manager::Drawable;
 
@@ -19,7 +19,7 @@ impl TestWidget {
 }
 
 impl Drawable for TestWidget {
-    fn render(&mut self, app: &mut App, f: &mut Frame) {
+    fn render(&mut self, f: &mut Frame) {
         let block = Block::new()
             .title("Test")
             .borders(Borders::ALL)
@@ -37,20 +37,20 @@ impl Drawable for TestWidget {
         f.render_widget(Clear, area);
         f.render_widget(paragraph, area);
 
-        app.status_bar.status(format!("Opened test screen with {}", self.title).as_str());
+        // app.status_bar.status(format!("Opened test screen with {}", self.title).as_str());
     }
-}
 
-impl TestWidget {
-    fn event_handler(&mut self, _app: &mut App, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
-
-    fn on_show(&mut self, app: &mut App) {
-        app.status_bar.status("Opened test screen");
-    }
-
-    fn on_hide(&mut self, app: &mut App) {
-        app.status_bar.status("Closed test screen");
-    }
 }
+
+// impl TestWidget {
+//     fn on_show(&mut self, app: &mut App) {
+//         app.status_bar.status("Opened test screen");
+//     }
+//
+//     fn on_hide(&mut self, app: &mut App) {
+//         app.status_bar.status("Closed test screen");
+//     }
+// }

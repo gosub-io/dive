@@ -1,6 +1,7 @@
+use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
-use crate::dive::app::App;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
 
@@ -21,7 +22,7 @@ impl StatusBar {
 }
 
 impl Drawable for StatusBar {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, f: &mut Frame) {
         let chunks = get_layout_chunks(f);
 
         let status_bar = Paragraph::new(Line::from(vec![
@@ -33,4 +34,9 @@ impl Drawable for StatusBar {
         f.render_widget(Clear, chunks[2]);
         f.render_widget(status_bar, chunks[2]);
     }
+
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+        Ok(None)
+    }
+
 }

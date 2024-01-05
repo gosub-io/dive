@@ -1,6 +1,7 @@
+use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
-use crate::dive::app::App;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
 
@@ -24,7 +25,7 @@ impl MenuBar {
 }
 
 impl Drawable for MenuBar {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, f: &mut Frame) {
         let menu_items = vec![
             "File",
             "Edit",
@@ -58,4 +59,9 @@ impl Drawable for MenuBar {
         f.render_widget(Clear, chunks[0]);
         f.render_widget(menu_bar, chunks[0]);
     }
+
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+        Ok(None)
+    }
+
 }

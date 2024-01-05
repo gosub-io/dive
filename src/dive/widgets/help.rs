@@ -1,9 +1,10 @@
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crossterm::event::KeyCode::Char;
 use ratatui::Frame;
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
-use crate::dive::app::App;
+use crate::dive::command_queue::{Command, CommandQueue};
 use crate::dive::widget_manager::Drawable;
-use crate::dive::app::{App, AppState};
 
 const HELPTEXT: &'static str = r#"
 
@@ -127,7 +128,7 @@ impl Help {
 }
 
 impl Drawable for Help {
-    fn render(&mut self, _app: &mut App, f: &mut Frame) {
+    fn render(&mut self, f: &mut Frame) {
         let size = f.size();
         let margins = Layout::default()
             .direction(Direction::Vertical)
@@ -174,12 +175,10 @@ impl Drawable for Help {
         );
     }
 
-    fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
-                app.state = AppState::Normal;
-                app.widget_manager.hide("help");
-                app.widget_manager.unfocus("help");
+                queue.push(Command::HideWidget{id: "help".into()});
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
@@ -189,50 +188,12 @@ impl Drawable for Help {
                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
             },
-            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
+            Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                queue.push(Command::Quit);
+            },
             _ => {}
         }
 
         Ok(Some(key))
     }
-
-    fn on_show(&mut self, app: &mut App) {
-        app.status_bar.status("Opened help screen");
-    }
-
-    fn on_hide(&mut self, app: &mut App) {
-        app.status_bar.status("Closed help screen");
-    }
 }
-
-// impl<T: 'static + Drawable> Help {
-//     fn event_handler(&mut self, app: &mut App, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
-//         match key.code {
-//             KeyCode::Esc | KeyCode::F(1) => {
-//                 app.widget_manager.find::<T>("help").unwrap().hide();
-//                 // app.widget_manager.find("help").unwrap().unfocus();
-//             }
-//             KeyCode::Down => {
-//                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
-//                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
-//             },
-//             KeyCode::Up => {
-//                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
-//                 self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
-//             },
-//             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => app.should_quit = true,
-//             _ => {}
-//         }
-//
-//         Ok(Some(key))
-//     }
-//
-//     fn on_show(&mut self, app: &mut App) {
-//         app.status_bar.status("Opened help screen");
-//     }
-//
-//     fn on_hide(&mut self, app: &mut App) {
-//         app.status_bar.status("Closed help screen");
-//     }
-// }
-
