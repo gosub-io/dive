@@ -45,7 +45,6 @@ impl App {
         let w1 = Widget::new("tabs", 0, true, app.tab_manager.clone());
         app.widget_manager.add(w1);
 
-
         // Add some test widgets
         let inner = Help::new();
         let w1 = Widget::new("help", 255, false, Rc::new(RefCell::new(inner)));
