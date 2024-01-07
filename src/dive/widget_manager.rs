@@ -1,12 +1,16 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::dive::command_queue::CommandQueue;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use crate::dive::command_queue::CommandQueue;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub trait Drawable {
     fn render(&mut self, f: &mut Frame);
-    fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>>;
+    fn event_handler(
+        &mut self,
+        queue: &mut CommandQueue,
+        key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>>;
     // fn on_show(&mut self, app: &mut App);
     // fn on_hide(&mut self, app: &mut App);
 }
@@ -79,13 +83,7 @@ impl WidgetManager {
             None => return None,
         };
 
-        for widget in &self.widgets {
-            if widget.id == focus_id {
-                return Some(&widget);
-            }
-        }
-
-        None
+        self.widgets.iter().find(|&widget| widget.id == focus_id)
     }
 
     pub(crate) fn render(&mut self, f: &mut Frame) {
@@ -125,7 +123,7 @@ impl WidgetManager {
                 widget.visible = !widget.visible;
 
                 // Remove focus when hiding and it was the focussed widget
-                if ! widget.visible && self.focussed_widget_id == Some(id.into()) {
+                if !widget.visible && self.focussed_widget_id == Some(id.into()) {
                     self.focussed_widget_id = None;
                 }
 
