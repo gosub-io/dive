@@ -64,6 +64,9 @@ impl TabManager {
     pub fn close(&mut self, idx: usize) {
         if idx < self.tabs.len() {
             self.tabs.remove(idx);
+            if self.current >= self.tabs.len() {
+                self.current = self.tabs.len() - 1;
+            }
         }
     }
 
