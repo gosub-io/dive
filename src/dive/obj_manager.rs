@@ -1,8 +1,8 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::dive::app::AppRef;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use crate::dive::app::AppRef;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub trait Displayable {
     fn render(&mut self, app: AppRef, f: &mut Frame);
@@ -54,9 +54,7 @@ impl DisplayObjectManager {
     }
 
     pub fn active(&self) -> Option<&DisplayObject> {
-        if self.active_display_object_index.is_none() {
-            return None;
-        }
+        self.active_display_object_index?;
 
         Some(&self.objects[self.active_display_object_index.unwrap()])
     }
@@ -90,7 +88,7 @@ impl DisplayObjectManager {
         }
     }
 
-    pub(crate) fn toggle_visible(&mut self, id:&str) {
+    pub(crate) fn toggle_visible(&mut self, id: &str) {
         if let Some(display_object) = self.find(id) {
             display_object.visible = !display_object.visible;
         }

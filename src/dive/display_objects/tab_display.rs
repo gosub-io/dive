@@ -1,12 +1,12 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use crossterm::event::KeyEvent;
-use ratatui::Frame;
-use ratatui::widgets::{Block, Borders, Clear, Tabs};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::tab_manager::TabManager;
 use crate::dive::ui::get_layout_chunks;
+use crossterm::event::KeyEvent;
+use ratatui::widgets::{Block, Borders, Clear, Tabs};
+use ratatui::Frame;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct TabDisplay {
     pub manager: Rc<RefCell<TabManager>>,
@@ -14,9 +14,7 @@ pub struct TabDisplay {
 
 impl TabDisplay {
     pub fn new(manager: Rc<RefCell<TabManager>>) -> Self {
-        Self {
-            manager,
-        }
+        Self { manager }
     }
 }
 
@@ -33,8 +31,7 @@ impl Displayable for TabDisplay {
             // .highlight_style(Style::default().yellow())
             .select(self.manager.borrow().current)
             .divider("|")
-            .padding("", "")
-        ;
+            .padding("", "");
 
         let chunk = get_layout_chunks(f);
         f.render_widget(Clear, chunk[1]);

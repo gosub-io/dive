@@ -1,10 +1,10 @@
-use crossterm::event::KeyEvent;
-use ratatui::Frame;
-use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, BorderType, Clear, Paragraph};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
+use crossterm::event::KeyEvent;
+use ratatui::prelude::*;
+use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
+use ratatui::Frame;
 
 pub struct TestDisplayObject;
 
@@ -19,15 +19,18 @@ impl Displayable for TestDisplayObject {
         let block = Block::new()
             .title("Test")
             .borders(Borders::ALL)
-            .style(Style::default().fg(Color::Yellow).bold().bg(Color::LightBlue))
-            .border_type(BorderType::Rounded)
-        ;
+            .style(
+                Style::default()
+                    .fg(Color::Yellow)
+                    .bold()
+                    .bg(Color::LightBlue),
+            )
+            .border_type(BorderType::Rounded);
 
         let paragraph = Paragraph::new("Hello Ratatui! (press 'q' to quit)")
             .white()
             .on_red()
-            .block(block)
-        ;
+            .block(block);
 
         let area = centered_rect(60, 25, f.size());
         f.render_widget(Clear, area);
@@ -39,10 +42,16 @@ impl Displayable for TestDisplayObject {
     }
 
     fn on_show(&mut self, app: AppRef) {
-        app.borrow().status_bar.borrow_mut().status("Opened test screen");
+        app.borrow()
+            .status_bar
+            .borrow_mut()
+            .status("Opened test screen");
     }
 
     fn on_hide(&mut self, app: AppRef) {
-        app.borrow().status_bar.borrow_mut().status("Closed test screen");
+        app.borrow()
+            .status_bar
+            .borrow_mut()
+            .status("Closed test screen");
     }
 }

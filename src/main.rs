@@ -1,9 +1,12 @@
-use anyhow::Result;
-use crossterm::{event, execute, terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen}};
-use crossterm::event::Event::Key;
-use ratatui::Frame;
-use ratatui::prelude::{CrosstermBackend, Terminal};
 use crate::dive::app::{App, AppRef};
+use anyhow::Result;
+use crossterm::event::Event::Key;
+use crossterm::{
+    event, execute,
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+};
+use ratatui::prelude::{CrosstermBackend, Terminal};
+use ratatui::Frame;
 
 mod dive;
 
@@ -21,7 +24,7 @@ fn shutdown() -> Result<()> {
 
 fn run(app: AppRef) -> Result<()> {
     let mut t = Terminal::new(CrosstermBackend::new(std::io::stderr()))?;
-    let _ = t.clear()?;
+    t.clear()?;
 
     loop {
         t.draw(|f| {
@@ -41,13 +44,13 @@ fn run(app: AppRef) -> Result<()> {
 }
 
 fn handle_events(app: AppRef) -> Result<()> {
-    if ! event::poll(std::time::Duration::from_millis(250))? {
+    if !event::poll(std::time::Duration::from_millis(250))? {
         return Ok(());
     }
 
     if let Key(key) = event::read()? {
         if key.kind != event::KeyEventKind::Press {
-            return Ok(())
+            return Ok(());
         }
 
         let res;
@@ -55,11 +58,11 @@ fn handle_events(app: AppRef) -> Result<()> {
             let binding = app.borrow();
             let obj_manager = binding.obj_manager.borrow();
 
-            let active = obj_manager.active().clone();
+            let active = obj_manager.active();
             match active {
                 Some(active) => {
                     res = active.inner.borrow_mut().event_handler(app.clone(), key)?;
-                },
+                }
                 None => {
                     res = None;
                 }
@@ -96,9 +99,18 @@ fn render(app: AppRef, f: &mut Frame) {
 fn main() -> Result<()> {
     let app = App::new();
 
-    app.borrow().tab_manager.borrow_mut().add_tab("New Tab", "gosub://blank");
-    app.borrow().tab_manager.borrow_mut().add_tab("Second Tab", "https://gosub.io");
-    app.borrow().tab_manager.borrow_mut().add_tab("Third Tab", "https://news.ycombinator.com");
+    app.borrow()
+        .tab_manager
+        .borrow_mut()
+        .add_tab("New Tab", "gosub://blank");
+    app.borrow()
+        .tab_manager
+        .borrow_mut()
+        .add_tab("Second Tab", "https://gosub.io");
+    app.borrow()
+        .tab_manager
+        .borrow_mut()
+        .add_tab("Third Tab", "https://news.ycombinator.com");
 
     startup()?;
     let status = run(app.clone());
@@ -106,4 +118,3 @@ fn main() -> Result<()> {
     status?;
     Ok(())
 }
-

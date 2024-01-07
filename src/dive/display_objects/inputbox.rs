@@ -1,12 +1,12 @@
-use crossterm::event::{Event, KeyCode, KeyEvent};
-use ratatui::Frame;
-use ratatui::prelude::{Color, Style, Stylize};
-use ratatui::widgets::{Block, Borders};
-use tui_input::backend::crossterm::EventHandler;
-use tui_input::Input;
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::centered_rect;
+use crossterm::event::{Event, KeyCode, KeyEvent};
+use ratatui::prelude::{Color, Style, Stylize};
+use ratatui::widgets::{Block, Borders};
+use ratatui::Frame;
+use tui_input::backend::crossterm::EventHandler;
+use tui_input::Input;
 
 pub struct InputBox {
     pub input: Input,
@@ -37,7 +37,12 @@ impl Displayable for InputBox {
         let popup_block = Block::default()
             .title(self.title.as_str())
             .borders(Borders::ALL)
-            .style(Style::default().fg(Color::Yellow).bold().bg(Color::LightBlue));
+            .style(
+                Style::default()
+                    .fg(Color::Yellow)
+                    .bold()
+                    .bg(Color::LightBlue),
+            );
 
         let area = centered_rect(60, 25, f.size());
         f.render_widget(popup_block, area);

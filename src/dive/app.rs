@@ -1,12 +1,12 @@
-use std::cell::RefCell;
-use std::rc::Rc;
-use crossterm::event::KeyCode::Char;
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use crate::dive;
 use crate::dive::display_objects::menu::MenuBar;
 use crate::dive::display_objects::status::StatusBar;
 use crate::dive::obj_manager::{DisplayObject, DisplayObjectManager};
 use crate::dive::tab_manager::TabManager;
+use crossterm::event::KeyCode::Char;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub type AppRef = Rc<RefCell<App>>;
 
@@ -35,9 +35,7 @@ impl App {
         let obj_manager = Rc::new(RefCell::new(DisplayObjectManager::new()));
 
         let app = App {
-            vars: AppVars {
-                should_quit: false
-            },
+            vars: AppVars { should_quit: false },
             status_bar: status_bar.clone(),
             menu_bar: menu_bar.clone(),
             tab_manager: tab_manager.clone(),
@@ -46,7 +44,9 @@ impl App {
 
         let app_ref = Rc::new(RefCell::new(app));
 
-        let tab_display_obj= Rc::new(RefCell::new(dive::display_objects::tab_display::TabDisplay::new(tab_manager.clone())));
+        let tab_display_obj = Rc::new(RefCell::new(
+            dive::display_objects::tab_display::TabDisplay::new(tab_manager.clone()),
+        ));
 
         // Add display objects
         {
@@ -56,10 +56,14 @@ impl App {
             obj_manager.add(DisplayObject::new("status", 128, status_bar.clone(), true));
             obj_manager.add(DisplayObject::new("tabs", 0, tab_display_obj.clone(), true));
 
-            let test = Rc::new(RefCell::new(dive::display_objects::test::TestDisplayObject::new()));
+            let test = Rc::new(RefCell::new(
+                dive::display_objects::test::TestDisplayObject::new(),
+            ));
             obj_manager.add(DisplayObject::new("test", 64, test.clone(), false));
 
-            let help = Rc::new(RefCell::new(dive::display_objects::help::HelpDisplayObject::new()));
+            let help = Rc::new(RefCell::new(
+                dive::display_objects::help::HelpDisplayObject::new(),
+            ));
             obj_manager.add(DisplayObject::new("help", 0, help.clone(), false));
         }
 
@@ -73,15 +77,17 @@ impl App {
     /// Main key handling
     pub(crate) fn process_key(&mut self, _app: AppRef, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
-            Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_digit(10) => {
+            Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_ascii_digit() => {
                 if let Some(digit) = c.to_digit(10) {
                     {
                         let mut tab_manager = self.tab_manager.borrow_mut();
                         tab_manager.switch(digit as usize);
                     }
-                    self.status_bar.borrow_mut().status(format!("Switched to tab {}", digit).as_str());
+                    self.status_bar
+                        .borrow_mut()
+                        .status(format!("Switched to tab {}", digit).as_str());
                 }
-            },
+            }
             Char('t') | KeyCode::F(1) => {
                 self.obj_manager.borrow_mut().visible("help", true);
                 self.obj_manager.borrow_mut().activate("help");
@@ -97,8 +103,10 @@ impl App {
                     let mut tab_manager = self.tab_manager.borrow_mut();
                     idx = tab_manager.next();
                 }
-                self.status_bar.borrow_mut().status(format!("Switched to tab {}", idx).as_str());
-            },
+                self.status_bar
+                    .borrow_mut()
+                    .status(format!("Switched to tab {}", idx).as_str());
+            }
             // Char('i') if key.modifiers.contains(KeyModifiers::CONTROL) => {
             //     // change the name of the current tab
             //     self.popup = true;
@@ -117,8 +125,10 @@ impl App {
                     idx = tab_manager.current;
                     tab_manager.close(idx);
                 }
-                self.status_bar.borrow_mut().status(format!("Closed tab {}", idx).as_str());
-            },
+                self.status_bar
+                    .borrow_mut()
+                    .status(format!("Closed tab {}", idx).as_str());
+            }
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let idx;
                 {
@@ -126,13 +136,15 @@ impl App {
                     idx = tab_manager.add_tab("New Tab", "gosub://blank");
                     tab_manager.switch(idx);
                 }
-                self.status_bar.borrow_mut().status(format!("Opened new tab {}", idx).as_str());
-            },
+                self.status_bar
+                    .borrow_mut()
+                    .status(format!("Opened new tab {}", idx).as_str());
+            }
 
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.vars.should_quit = true;
             }
-            _ => {},
+            _ => {}
         }
         Ok(())
     }

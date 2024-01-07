@@ -1,9 +1,9 @@
-use crossterm::event::KeyEvent;
-use ratatui::prelude::*;
-use ratatui::widgets::{Clear, Paragraph};
 use crate::dive::app::AppRef;
 use crate::dive::obj_manager::Displayable;
 use crate::dive::ui::get_layout_chunks;
+use crossterm::event::KeyEvent;
+use ratatui::prelude::*;
+use ratatui::widgets::{Clear, Paragraph};
 
 pub struct StatusBar {
     pub status: String,
@@ -26,10 +26,14 @@ impl Displayable for StatusBar {
         let chunks = get_layout_chunks(f);
 
         let status_bar = Paragraph::new(Line::from(vec![
-            Span::styled(self.status.clone(), Style::default().add_modifier(Modifier::BOLD)),
+            Span::styled(
+                self.status.clone(),
+                Style::default().add_modifier(Modifier::BOLD),
+            ),
             Span::raw(" | "),
             Span::raw("Line 1, Column 1"),
-        ])).style(Style::default().bg(Color::Blue).bold());
+        ]))
+        .style(Style::default().bg(Color::Blue).bold());
 
         f.render_widget(Clear, chunks[2]);
         f.render_widget(status_bar, chunks[2]);
@@ -40,7 +44,7 @@ impl Displayable for StatusBar {
         Ok(None)
     }
 
-    fn on_show(&mut self, _app: AppRef) { }
+    fn on_show(&mut self, _app: AppRef) {}
 
-    fn on_hide(&mut self, _app: AppRef) { }
+    fn on_hide(&mut self, _app: AppRef) {}
 }
