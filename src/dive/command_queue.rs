@@ -8,6 +8,7 @@ pub enum Command {
     ToggleWidget {id: String, focus: bool },
     FocusWidget { id: String },
     UnfocusWidget { id: String },
+    DestroyWidget { id: String },
     Quit,
 }
 

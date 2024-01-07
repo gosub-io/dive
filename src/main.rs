@@ -6,6 +6,7 @@ use ratatui::prelude::{CrosstermBackend, Terminal};
 use crate::dive::app::App;
 use crate::dive::widget_manager::Widget;
 use crate::dive::widgets::splash::SplashWidget;
+use better_panic::Settings;
 
 mod dive;
 
@@ -41,6 +42,14 @@ fn run(app: &mut App) -> Result<()> {
     Ok(())
 }
 
+pub fn initialize_panic_handler() {
+    std::panic::set_hook(Box::new(|panic_info| {
+        crossterm::execute!(std::io::stderr(), crossterm::terminal::LeaveAlternateScreen).unwrap();
+        crossterm::terminal::disable_raw_mode().unwrap();
+        Settings::auto().most_recent_first(false).lineno_suffix(true).create_panic_handler()(panic_info);
+    }));
+}
+
 fn main() -> Result<()> {
     let mut app = App::new();
 
@@ -49,7 +58,7 @@ fn main() -> Result<()> {
     app.tab_manager.borrow_mut().open("Third Tab", "https://news.ycombinator.com");
 
     let w1 = Widget::new("splash", 255, false, Rc::new(RefCell::new(SplashWidget::new())));
-    app.widget_manager.add(w1);
+    app.widget_manager.create(w1);
     app.widget_manager.show("splash", true);
 
     startup()?;

@@ -8,12 +8,12 @@ use crate::dive::ui::centered_rect;
 use crate::dive::widget_manager::Drawable;
 
 const SPLASH_TEXT: &str = r#"
- _____ _____ _____ _   _______
-|  __ \  _  /  ___| | | | ___ \
-| |  \/ | | \ `--.| | | | |_/ /
-| | __| | | |`--. \ | | | ___ \
-| |_\ \ \_/ /\__/ / |_| | |_/ /
- \____/\___/\____/ \___/\____/
+  _____ _____ _____ _   _______      ______ _____ _   _ _____
+  |  __ \  _  /  ___| | | | ___ \     |  _  \_   _| | | |  ___|
+ | |  \/ | | \ `--.| | | | |_/ /     | | | | | | | | | | |__
+ | | __| | | |`--. \ | | | ___ \     | | | | | | | | | |  __|
+ | |_\ \ \_/ /\__/ / |_| | |_/ /     | |/ / _| |_\ \_/ / |___
+  \____/\___/\____/ \___/\____/      |___/  \___/ \___/\____/
 
 Press ESC to continue
 
@@ -52,7 +52,7 @@ impl Drawable for SplashWidget {
     fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | Char(' ') => {
-                queue.push(Command::HideWidget{id: "splash".into()});
+                queue.push(Command::DestroyWidget{id: "splash".into()});
             }
             _ => {}
         }

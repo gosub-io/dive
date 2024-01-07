@@ -52,10 +52,14 @@ impl WidgetManager {
         }
     }
 
-    pub fn add(&mut self, widget: Widget) {
+    pub(crate) fn destroy(&mut self, id: &String) {
+        if let Some(index) = self.widgets.iter().position(|w| w.id == *id) {
+            self.widgets.remove(index);
+        }
+    }
+
+    pub fn create(&mut self, widget: Widget) {
         self.widgets.push(widget);
-        // self.widgets.push(Box::new(move |app: &mut App, f: &mut Frame| widget.render(app, f)));
-        // self.widgets.sort_by(|a, b| a.priority.cmp(&b.priority));
     }
 
     #[allow(dead_code)]

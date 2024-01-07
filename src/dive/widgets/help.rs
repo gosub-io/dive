@@ -177,7 +177,7 @@ impl Drawable for Help {
     fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
-                queue.push(Command::HideWidget{id: "help".into()});
+                queue.push(Command::DestroyWidget{id: "help".into()});
             }
             KeyCode::Down => {
                 self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);

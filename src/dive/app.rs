@@ -9,6 +9,7 @@ use crate::dive::widget_manager::{Widget, WidgetManager};
 use crate::dive::widgets::help::Help;
 use crate::dive::widgets::menu_bar::MenuBar;
 use crate::dive::widgets::status_bar::StatusBar;
+use crate::dive::widgets::tab_list::TabListWidget;
 use crate::dive::widgets::tab_manager::TabManager;
 use crate::dive::widgets::test::TestWidget;
 
@@ -39,24 +40,11 @@ impl App {
 
         // Add the main widgets
         let w1 = Widget::new("statusbar", 0, true, app.status_bar.clone());
-        app.widget_manager.add(w1);
+        app.widget_manager.create(w1);
         let w1 = Widget::new("menubar", 0, true, app.menu_bar.clone());
-        app.widget_manager.add(w1);
+        app.widget_manager.create(w1);
         let w1 = Widget::new("tabs", 0, true, app.tab_manager.clone());
-        app.widget_manager.add(w1);
-
-        // Add some test widgets
-        let inner = Help::new();
-        let w1 = Widget::new("help", 255, false, Rc::new(RefCell::new(inner)));
-        app.widget_manager.add(w1);
-
-        let inner = TestWidget::new("dos/4gw");
-        let w2 = Widget::new("test1", 128, false, Rc::new(RefCell::new(inner)));
-        app.widget_manager.add(w2);
-
-        let inner = TestWidget::new("freebsd");
-        let w3 = Widget::new("test2", 64, false, Rc::new(RefCell::new(inner)));
-        app.widget_manager.add(w3);
+        app.widget_manager.create(w1);
 
         app
     }
@@ -104,13 +92,33 @@ impl App {
                 }
             },
             Char('t') | KeyCode::F(1) => {
+                // Add some test widgets
+                let inner = Help::new();
+                let w1 = Widget::new("help", 255, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(w1);
+
                 self.command_queue.push(Command::ShowWidget{id: "help".into(), focus: true});
             }
             KeyCode::F(2) => {
+
+                let inner = TestWidget::new("dos/4gw");
+                let w2 = Widget::new("test1", 128, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(w2);
+
                 self.command_queue.push(Command::ToggleWidget{id: "test1".into(), focus: false});
             }
             KeyCode::F(3) => {
+                let inner = TestWidget::new("freebsd");
+                let w3 = Widget::new("test2", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(w3);
+
                 self.command_queue.push(Command::ToggleWidget{id: "test2".into(), focus: false});
+            }
+            KeyCode::F(4) => {
+                let inner = TabListWidget::new(self.tab_manager.clone());
+                let widget = Widget::new("tab_list", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(widget);
+                self.command_queue.push(Command::ShowWidget{id: "tab_list".into(), focus: true});
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
             KeyCode::Tab if key.modifiers.contains(KeyModifiers::SHIFT) => {
@@ -168,6 +176,9 @@ impl App {
                 Some(Command::FocusWidget { .. }) => {}
                 Some(Command::UnfocusWidget { .. }) => {}
                 None => break,
+                Some(Command::DestroyWidget {id}) => {
+                    self.widget_manager.destroy(&id);
+                }
             }
         }
     }
