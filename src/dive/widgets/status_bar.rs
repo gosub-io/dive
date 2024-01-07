@@ -1,9 +1,9 @@
 use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
-use crate::dive::app::AppRef;
-use crate::dive::obj_manager::Displayable;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
+use crate::dive::widget_manager::Drawable;
 
 pub struct StatusBar {
     pub status: String,
@@ -21,8 +21,8 @@ impl StatusBar {
     }
 }
 
-impl Displayable for StatusBar {
-    fn render(&mut self, _app: AppRef, f: &mut Frame) {
+impl Drawable for StatusBar {
+    fn render(&mut self, f: &mut Frame) {
         let chunks = get_layout_chunks(f);
 
         let status_bar = Paragraph::new(Line::from(vec![
@@ -35,12 +35,8 @@ impl Displayable for StatusBar {
         f.render_widget(status_bar, chunks[2]);
     }
 
-    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
-        // Status bar does not handle keys
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
 
-    fn on_show(&mut self, _app: AppRef) { }
-
-    fn on_hide(&mut self, _app: AppRef) { }
 }

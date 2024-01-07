@@ -1,5 +1,6 @@
 pub mod app;
 mod ui;
-mod display_objects;
-mod tab_manager;
-mod obj_manager;
+mod logger;
+pub mod widgets;
+pub mod widget_manager;
+mod command_queue;

@@ -1,9 +1,9 @@
+use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
-use crossterm::event::KeyEvent;
-use crate::dive::app::AppRef;
-use crate::dive::obj_manager::Displayable;
+use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
+use crate::dive::widget_manager::Drawable;
 
 pub struct MenuBar {
     pub active: bool,
@@ -24,9 +24,8 @@ impl MenuBar {
     }
 }
 
-impl Displayable for MenuBar {
-    fn render(&mut self, _app: AppRef, f: &mut Frame) {
-
+impl Drawable for MenuBar {
+    fn render(&mut self, f: &mut Frame) {
         let menu_items = vec![
             "File",
             "Edit",
@@ -61,12 +60,8 @@ impl Displayable for MenuBar {
         f.render_widget(menu_bar, chunks[0]);
     }
 
-    fn event_handler(&mut self, _app: AppRef, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
-        // We should handle left, right to change the menu item active
+    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
 
-    fn on_show(&mut self, _app: AppRef) { }
-
-    fn on_hide(&mut self, _app: AppRef) { }
 }
