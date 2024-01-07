@@ -1,9 +1,9 @@
-use crossterm::event::KeyEvent;
-use ratatui::prelude::*;
-use ratatui::widgets::{Clear, Paragraph};
 use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
+use crossterm::event::KeyEvent;
+use ratatui::prelude::*;
+use ratatui::widgets::{Clear, Paragraph};
 
 pub struct MenuBar {
     pub active: bool,
@@ -26,7 +26,7 @@ impl MenuBar {
 
 impl Drawable for MenuBar {
     fn render(&mut self, f: &mut Frame) {
-        let menu_items = vec![
+        let menu_items = [
             "File",
             "Edit",
             "View",
@@ -36,9 +36,10 @@ impl Drawable for MenuBar {
             "Help",
         ];
 
-        let mut menu_tiles = vec![
-            Span::styled(" Gosub Dive ", Style::default().fg(Color::White).bold()),
-        ];
+        let mut menu_tiles = vec![Span::styled(
+            " Gosub Dive ",
+            Style::default().fg(Color::White).bold(),
+        )];
 
         for (idx, item) in menu_items.iter().enumerate() {
             menu_tiles.push(Span::raw("|"));
@@ -46,7 +47,10 @@ impl Drawable for MenuBar {
             if self.active && self.menu_item_active == idx as u8 {
                 menu_tiles.push(Span::styled(
                     format!(" {} ", item),
-                    Style::default().bg(Color::Green).fg(Color::White).add_modifier(Modifier::BOLD),
+                    Style::default()
+                        .bg(Color::Green)
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
                 ));
             } else {
                 menu_tiles.push(Span::raw(format!(" {} ", item)));
@@ -54,14 +58,21 @@ impl Drawable for MenuBar {
         }
 
         let chunks = get_layout_chunks(f);
-        let menu_bar = Paragraph::new(Line::from(menu_tiles)).style(Style::default().bg(Color::Blue).add_modifier(Modifier::BOLD));
+        let menu_bar = Paragraph::new(Line::from(menu_tiles)).style(
+            Style::default()
+                .bg(Color::Blue)
+                .add_modifier(Modifier::BOLD),
+        );
 
         f.render_widget(Clear, chunks[0]);
         f.render_widget(menu_bar, chunks[0]);
     }
 
-    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(
+        &mut self,
+        _queue: &mut CommandQueue,
+        _key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
-
 }

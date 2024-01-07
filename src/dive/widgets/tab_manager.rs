@@ -1,9 +1,9 @@
-use crossterm::event::KeyEvent;
-use ratatui::Frame;
-use ratatui::widgets::{Block, Borders, Clear, Tabs};
 use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
+use crossterm::event::KeyEvent;
+use ratatui::widgets::{Block, Borders, Clear, Tabs};
+use ratatui::Frame;
 
 pub struct Tab {
     pub name: String,
@@ -85,16 +85,18 @@ impl Drawable for TabManager {
             // .highlight_style(Style::default().yellow())
             .select(self.current)
             .divider("|")
-            .padding("", "")
-            ;
+            .padding("", "");
 
         let chunk = get_layout_chunks(f);
         f.render_widget(Clear, chunk[1]);
         f.render_widget(tabs, chunk[1]);
     }
 
-    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(
+        &mut self,
+        _queue: &mut CommandQueue,
+        _key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
-
 }

@@ -1,6 +1,6 @@
-use std::rc::Rc;
-use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::Frame;
+use std::rc::Rc;
 
 pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     // Cut the given rectangle into three vertical pieces
@@ -32,11 +32,11 @@ pub fn get_layout_chunks(f: &mut Frame) -> Rc<[Rect]> {
         .margin(1)
         .constraints(
             [
-                Constraint::Length(1),      // menu bar
-                Constraint::Min(0),         // content
-                Constraint::Length(1),      // status bar
+                Constraint::Length(1), // menu bar
+                Constraint::Min(0),    // content
+                Constraint::Length(1), // status bar
             ]
-                .as_ref(),
+            .as_ref(),
         )
         .split(size);
 

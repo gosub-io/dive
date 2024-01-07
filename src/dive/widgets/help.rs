@@ -1,12 +1,15 @@
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
-use crossterm::event::KeyCode::Char;
-use ratatui::Frame;
-use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap};
 use crate::dive::command_queue::{Command, CommandQueue};
 use crate::dive::widget_manager::Drawable;
+use crossterm::event::KeyCode::Char;
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use ratatui::prelude::*;
+use ratatui::widgets::{
+    Block, Borders, Clear, Padding, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState,
+    Wrap,
+};
+use ratatui::Frame;
 
-const HELPTEXT: &'static str = r#"
+const HELPTEXT: &str = r#"
 #1Gosub Dive Help
 #1===============
 This is the help screen for Gosub Dive. It is a work in progress and displays the current key bindings. This browser is a proof-of-concept project and is not intended for production use.
@@ -45,17 +48,33 @@ This is the help screen for Gosub Dive. It is a work in progress and displays th
 
 fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     // #0 is default style, #1 is yellow, etc
-    let cols = vec![
+    let cols = [
         Style::default(),
-        Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Yellow)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::White)
+            .add_modifier(Modifier::BOLD),
         Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::Green).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::Blue).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::Magenta).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::LightBlue).add_modifier(Modifier::BOLD),
-        Style::default().fg(Color::LightGreen).add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Green)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Cyan)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Blue)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::Magenta)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::LightBlue)
+            .add_modifier(Modifier::BOLD),
+        Style::default()
+            .fg(Color::LightGreen)
+            .add_modifier(Modifier::BOLD),
     ];
 
     // This code basically iterates over the lines of the help text. Each line
@@ -68,7 +87,7 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     let mut lines = Vec::new();
     let mut partial_line = Vec::new();
 
-    let help_lines = HELPTEXT.split("\n").collect::<Vec<&str>>();
+    let help_lines = HELPTEXT.split('\n').collect::<Vec<&str>>();
     for line in help_lines {
         let mut cs = Style::default();
 
@@ -79,7 +98,8 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
             match ch {
                 '#' => {
                     if line.chars().nth(idx + 1).unwrap().is_ascii_digit() {
-                        let line_part: String = line.chars().skip(start_idx).take(idx - start_idx).collect();
+                        let line_part: String =
+                            line.chars().skip(start_idx).take(idx - start_idx).collect();
                         partial_line.push(Span::styled(line_part, cs));
                         start_idx = idx + 2;
 
@@ -136,8 +156,7 @@ impl Drawable for Help {
                 Constraint::Percentage(80),
                 Constraint::Percentage(10),
             ])
-            .split(size)
-            ;
+            .split(size);
 
         let help_block_area = Layout::default()
             .direction(Direction::Horizontal)
@@ -146,20 +165,17 @@ impl Drawable for Help {
                 Constraint::Percentage(80),
                 Constraint::Percentage(10),
             ])
-            .split(margins[1])[1]
-            ;
+            .split(margins[1])[1];
 
         let help_block = Block::default()
             .title(" Help ")
             .borders(Borders::ALL)
-            .padding(Padding::uniform(1))
-            ;
+            .padding(Padding::uniform(1));
 
         let help_paragraph = Paragraph::new(Text::from(self.content.clone()))
             .block(help_block)
             .wrap(Wrap { trim: false })
-            .scroll((self.vertical_scroll as u16, 0))
-            ;
+            .scroll((self.vertical_scroll as u16, 0));
 
         f.render_widget(Clear, help_block_area);
         f.render_widget(help_paragraph, help_block_area);
@@ -174,22 +190,31 @@ impl Drawable for Help {
         );
     }
 
-    fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(
+        &mut self,
+        queue: &mut CommandQueue,
+        key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>> {
         match key.code {
             KeyCode::Esc | KeyCode::F(1) => {
-                queue.push(Command::DestroyWidget{id: "help".into()});
+                queue.push(Command::DestroyWidget { id: "help".into() });
             }
             KeyCode::Down => {
-                self.vertical_scroll = self.vertical_scroll.saturating_add(1).clamp(0, self.vertical_scroll_max - 1);
-                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
-            },
+                self.vertical_scroll = self
+                    .vertical_scroll
+                    .saturating_add(1)
+                    .clamp(0, self.vertical_scroll_max - 1);
+                self.vertical_scroll_state =
+                    self.vertical_scroll_state.position(self.vertical_scroll);
+            }
             KeyCode::Up => {
                 self.vertical_scroll = self.vertical_scroll.saturating_sub(1);
-                self.vertical_scroll_state = self.vertical_scroll_state.position(self.vertical_scroll);
-            },
+                self.vertical_scroll_state =
+                    self.vertical_scroll_state.position(self.vertical_scroll);
+            }
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 queue.push(Command::Quit);
-            },
+            }
             _ => {}
         }
 

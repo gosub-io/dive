@@ -1,12 +1,16 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use crate::dive::command_queue::CommandQueue;
 use crossterm::event::KeyEvent;
 use ratatui::Frame;
-use crate::dive::command_queue::CommandQueue;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 pub trait Drawable {
     fn render(&mut self, f: &mut Frame);
-    fn event_handler(&mut self, queue: &mut CommandQueue, key: KeyEvent) -> anyhow::Result<Option<KeyEvent>>;
+    fn event_handler(
+        &mut self,
+        queue: &mut CommandQueue,
+        key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>>;
     // fn on_show(&mut self, app: &mut App);
     // fn on_hide(&mut self, app: &mut App);
 }
@@ -64,13 +68,7 @@ impl WidgetManager {
 
     #[allow(dead_code)]
     pub fn find(&mut self, id: &str) -> Option<&mut Widget> {
-        for widget_object in self.widgets.iter_mut() {
-            if widget_object.id == id {
-                return Some(widget_object);
-            }
-        }
-
-        None
+        self.widgets.iter_mut().find(|widget| widget.id == id)
     }
 
     pub(crate) fn focussed(&self) -> Option<&Widget> {
@@ -79,13 +77,7 @@ impl WidgetManager {
             None => return None,
         };
 
-        for widget in &self.widgets {
-            if widget.id == focus_id {
-                return Some(&widget);
-            }
-        }
-
-        None
+        self.widgets.iter().find(|&widget| widget.id == focus_id)
     }
 
     pub(crate) fn render(&mut self, f: &mut Frame) {
@@ -125,7 +117,7 @@ impl WidgetManager {
                 widget.visible = !widget.visible;
 
                 // Remove focus when hiding and it was the focussed widget
-                if ! widget.visible && self.focussed_widget_id == Some(id.into()) {
+                if !widget.visible && self.focussed_widget_id == Some(id.into()) {
                     self.focussed_widget_id = None;
                 }
 
@@ -136,6 +128,7 @@ impl WidgetManager {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn is_visible(&self, id: &str) -> bool {
         for widget in &self.widgets {
             if widget.id == id {

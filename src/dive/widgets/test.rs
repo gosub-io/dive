@@ -1,10 +1,10 @@
-use crossterm::event::KeyEvent;
-use ratatui::Frame;
-use ratatui::prelude::*;
-use ratatui::widgets::{Block, Borders, BorderType, Clear, Paragraph};
 use crate::dive::command_queue::CommandQueue;
 use crate::dive::ui::centered_rect;
 use crate::dive::widget_manager::Drawable;
+use crossterm::event::KeyEvent;
+use ratatui::prelude::*;
+use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
+use ratatui::Frame;
 
 pub struct TestWidget {
     title: String,
@@ -23,15 +23,18 @@ impl Drawable for TestWidget {
         let block = Block::new()
             .title("Test")
             .borders(Borders::ALL)
-            .style(Style::default().fg(Color::Yellow).bold().bg(Color::LightBlue))
-            .border_type(BorderType::Rounded)
-            ;
+            .style(
+                Style::default()
+                    .fg(Color::Yellow)
+                    .bold()
+                    .bg(Color::LightBlue),
+            )
+            .border_type(BorderType::Rounded);
 
         let paragraph = Paragraph::new(self.title.clone())
             .white()
             .on_red()
-            .block(block)
-            ;
+            .block(block);
 
         let area = centered_rect(60, 25, f.size());
         f.render_widget(Clear, area);
@@ -40,7 +43,11 @@ impl Drawable for TestWidget {
         // app.status_bar.status(format!("Opened test screen with {}", self.title).as_str());
     }
 
-    fn event_handler(&mut self, _queue: &mut CommandQueue, _key: KeyEvent) -> anyhow::Result<Option<KeyEvent>> {
+    fn event_handler(
+        &mut self,
+        _queue: &mut CommandQueue,
+        _key: KeyEvent,
+    ) -> anyhow::Result<Option<KeyEvent>> {
         Ok(None)
     }
 }
