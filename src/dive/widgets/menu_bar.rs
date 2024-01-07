@@ -26,13 +26,15 @@ impl MenuBar {
 
 impl Drawable for MenuBar {
     fn render(&mut self, f: &mut Frame) {
-        let menu_items = ["File",
+        let menu_items = [
+            "File",
             "Edit",
             "View",
             "History",
             "Bookmarks",
             "Tools",
-            "Help"];
+            "Help",
+        ];
 
         let mut menu_tiles = vec![Span::styled(
             " Gosub Dive ",

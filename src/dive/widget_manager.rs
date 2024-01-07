@@ -68,13 +68,7 @@ impl WidgetManager {
 
     #[allow(dead_code)]
     pub fn find(&mut self, id: &str) -> Option<&mut Widget> {
-        for widget_object in self.widgets.iter_mut() {
-            if widget_object.id == id {
-                return Some(widget_object);
-            }
-        }
-
-        None
+        self.widgets.iter_mut().find(|widget| widget.id == id)
     }
 
     pub(crate) fn focussed(&self) -> Option<&Widget> {
@@ -134,6 +128,7 @@ impl WidgetManager {
         }
     }
 
+    #[allow(dead_code)]
     pub(crate) fn is_visible(&self, id: &str) -> bool {
         for widget in &self.widgets {
             if widget.id == id {

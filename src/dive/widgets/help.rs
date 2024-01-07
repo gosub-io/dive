@@ -48,7 +48,8 @@ This is the help screen for Gosub Dive. It is a work in progress and displays th
 
 fn generate_lines_from_helptext() -> Vec<Line<'static>> {
     // #0 is default style, #1 is yellow, etc
-    let cols = [Style::default(),
+    let cols = [
+        Style::default(),
         Style::default()
             .fg(Color::Yellow)
             .add_modifier(Modifier::BOLD),
@@ -73,7 +74,8 @@ fn generate_lines_from_helptext() -> Vec<Line<'static>> {
             .add_modifier(Modifier::BOLD),
         Style::default()
             .fg(Color::LightGreen)
-            .add_modifier(Modifier::BOLD)];
+            .add_modifier(Modifier::BOLD),
+    ];
 
     // This code basically iterates over the lines of the help text. Each line
     // is split into a vector of spans on the #N characters. If a #N is found,

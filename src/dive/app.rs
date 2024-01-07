@@ -59,20 +59,14 @@ impl App {
             }
 
             let mut handle_as_unfocussed = true;
-            match self.widget_manager.focussed() {
-                Some(widget) => {
-                    match widget
-                        .inner
-                        .borrow_mut()
-                        .event_handler(&mut self.command_queue, key)
-                    {
-                        Ok(Some(_)) => {
-                            handle_as_unfocussed = false;
-                        }
-                        _ => {}
-                    }
+            if let Some(widget) = self.widget_manager.focussed() {
+                if let Ok(Some(_)) = widget
+                    .inner
+                    .borrow_mut()
+                    .event_handler(&mut self.command_queue, key)
+                {
+                    handle_as_unfocussed = false;
                 }
-                None => {}
             }
 
             if handle_as_unfocussed {
