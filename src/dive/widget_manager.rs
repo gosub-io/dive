@@ -11,8 +11,8 @@ pub trait Drawable {
         queue: &mut CommandQueue,
         key: KeyEvent,
     ) -> anyhow::Result<Option<KeyEvent>>;
-    // fn on_show(&mut self, app: &mut App);
-    // fn on_hide(&mut self, app: &mut App);
+    fn on_show(&mut self);
+    fn on_hide(&mut self);
 }
 
 pub struct Widget {
@@ -91,6 +91,8 @@ impl WidgetManager {
             if widget.id == id {
                 widget.visible = true;
 
+                widget.inner.borrow_mut().on_show();
+
                 if focus {
                     self.focussed_widget_id = Some(id.into());
                 }
@@ -102,6 +104,8 @@ impl WidgetManager {
         for widget in &mut self.widgets {
             if widget.id == id {
                 widget.visible = false;
+
+                widget.inner.borrow_mut().on_hide();
 
                 // remove focus if we had it
                 if self.focussed_widget_id == Some(id.into()) {

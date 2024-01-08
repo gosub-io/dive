@@ -22,6 +22,9 @@ impl StatusBar {
 }
 
 impl Drawable for StatusBar {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let chunks = get_layout_chunks(f);
 

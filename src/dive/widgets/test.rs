@@ -11,6 +11,7 @@ pub struct TestWidget {
 }
 
 impl TestWidget {
+    #[allow(dead_code)]
     pub fn new(title: &str) -> Self {
         Self {
             title: title.into(),
@@ -19,6 +20,9 @@ impl TestWidget {
 }
 
 impl Drawable for TestWidget {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let block = Block::new()
             .title("Test")

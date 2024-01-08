@@ -8,17 +8,7 @@ For more general information you can also join our [Discord server](https://chat
 
 If you are interested in contributing to Gosub, please checkout the [contribution guide](CONTRIBUTING.md)!
 
-```
-                       _
-                      | |
-  __ _  ___  ___ _   _| |__
- / _` |/ _ \/ __| | | | '_ \
-| (_| | (_) \__ \ |_| | |_) |
- \__, |\___/|___/\__,_|_.__/
-  __/ |  The Gateway to
- |___/   Optimized Searching and
-         Unlimited Browsing
-```
+![dive.gif](dive.gif)
 
 ## About
 This repository contains the source code for the Gosub Dive browser. Dive is a proof of concept textual browser based on the Gosub Engine.
