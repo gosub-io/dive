@@ -4,6 +4,7 @@ use crate::dive::tab_manager::TabManager;
 use crate::dive::widget_manager::{Widget, WidgetManager};
 use crate::dive::widgets::bookmark_list::BookmarkListWidget;
 use crate::dive::widgets::help::Help;
+use crate::dive::widgets::input::{InputSubmitCommand, InputWidget};
 use crate::dive::widgets::menu_bar::MenuBar;
 use crate::dive::widgets::status_bar::StatusBar;
 use crate::dive::widgets::tab_list::TabListWidget;
@@ -18,13 +19,13 @@ use std::rc::Rc;
 pub struct App {
     pub should_quit: bool,
 
-    pub command_queue: CommandQueue,
-
     pub status_bar: Rc<RefCell<StatusBar>>,
     pub menu_bar: Rc<RefCell<MenuBar>>,
     pub tab_manager: Rc<RefCell<TabManager>>,
     pub bookmark_manager: Rc<RefCell<BookmarkManager>>,
+
     pub widget_manager: WidgetManager,
+    pub command_queue: CommandQueue,
 }
 
 impl App {
@@ -90,6 +91,7 @@ impl App {
     /// Main key handling
     fn process_key(&mut self, key: KeyEvent) -> anyhow::Result<()> {
         match key.code {
+            // ALT-0..9 to switch tabs directly
             Char(c) if key.modifiers.contains(KeyModifiers::ALT) && c.is_ascii_digit() => {
                 if let Some(digit) = c.to_digit(10) {
                     self.tab_manager.borrow_mut().switch(digit as usize);
@@ -98,7 +100,8 @@ impl App {
                         .status(format!("Switched to tab {}", digit).as_str());
                 }
             }
-            Char('t') | KeyCode::F(1) => {
+            // Show help
+            KeyCode::F(1) => {
                 // Add some test widgets
                 let inner = Help::new();
                 let w1 = Widget::new("help", 255, false, Rc::new(RefCell::new(inner)));
@@ -109,6 +112,7 @@ impl App {
                     focus: true,
                 });
             }
+            // Show tab list
             KeyCode::F(2) => {
                 let inner = TabListWidget::new(self.tab_manager.clone());
                 let widget = Widget::new("tab_list", 64, false, Rc::new(RefCell::new(inner)));
@@ -118,6 +122,7 @@ impl App {
                     focus: true,
                 });
             }
+            // Show bookmark list
             KeyCode::F(8) => {
                 let inner = BookmarkListWidget::new(self.bookmark_manager.clone());
                 let widget = Widget::new("bookmark_list", 64, false, Rc::new(RefCell::new(inner)));
@@ -128,22 +133,40 @@ impl App {
                 });
             }
             // KeyCode::F(9) => self.menu_active = !self.menu_active,
+            // Switch to previous tab
             KeyCode::Tab if key.modifiers.contains(KeyModifiers::SHIFT) => {
                 let idx = self.tab_manager.borrow_mut().prev();
                 self.status_bar
                     .borrow_mut()
                     .status(format!("Switched to tab {}", idx).as_str());
             }
+            // switch to next tab
             KeyCode::Tab => {
                 let idx = self.tab_manager.borrow_mut().next();
                 self.status_bar
                     .borrow_mut()
                     .status(format!("Switched to tab {}", idx).as_str());
             }
-            // Char('i') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-            //     // change the name of the current tab
-            //     self.popup = true;
-            // }
+            // change the name of the current tab
+            Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                let name = self.tab_manager.borrow().current().name.clone();
+
+                let tab_idx = self.tab_manager.borrow().current;
+                let inner = InputWidget::new(
+                    "Enter name for this tab",
+                    &name,
+                    40,
+                    InputSubmitCommand::RenameTab { tab_idx },
+                );
+
+                let widget = Widget::new("input", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(widget);
+                self.command_queue.push(Command::ShowWidget {
+                    id: "input".into(),
+                    focus: true,
+                });
+            }
+            // Close current tab
             Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 if self.tab_manager.borrow().len() == 1 {
                     self.status_bar.borrow_mut().status("Can't close last tab");
@@ -156,6 +179,7 @@ impl App {
                     .borrow_mut()
                     .status(format!("Closed tab {}", idx).as_str());
             }
+            // Add new tab with blank page
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let idx = self
                     .tab_manager
@@ -166,7 +190,7 @@ impl App {
                     .borrow_mut()
                     .status(format!("Opened new tab {}", idx).as_str());
             }
-
+            // quit application
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 self.command_queue.push(Command::Quit);
             }
@@ -178,6 +202,7 @@ impl App {
     pub(crate) fn process_commands(&mut self) {
         loop {
             match self.command_queue.pending() {
+                None => break,
                 Some(Command::Quit) => {
                     self.should_quit = true;
                     break;
@@ -193,9 +218,19 @@ impl App {
                 }
                 Some(Command::FocusWidget { .. }) => {}
                 Some(Command::UnfocusWidget { .. }) => {}
-                None => break,
                 Some(Command::DestroyWidget { id }) => {
                     self.widget_manager.destroy(&id);
+                }
+                Some(Command::InputSubmit { command, value }) => match command {
+                    InputSubmitCommand::RenameTab { tab_idx } => {
+                        self.command_queue.push(Command::RenameTab {
+                            tab_idx,
+                            name: value,
+                        });
+                    }
+                },
+                Some(Command::RenameTab { tab_idx, name }) => {
+                    self.tab_manager.borrow_mut().rename(tab_idx, &name);
                 }
             }
         }

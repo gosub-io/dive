@@ -17,6 +17,16 @@ impl TabManager {
         }
     }
 
+    pub fn current(&self) -> &Tab {
+        self.tabs.get(self.current).expect("No current tab")
+    }
+
+    pub fn rename(&mut self, idx: usize, name: &str) {
+        if idx < self.tabs.len() {
+            self.tabs[idx].name = name.into();
+        }
+    }
+
     pub fn open(&mut self, name: &str, url: &str) -> usize {
         let tab = Tab {
             name: name.into(),
