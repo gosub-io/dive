@@ -1,11 +1,13 @@
+use crate::dive::bookmark_manager::BookmarkManager;
 use crate::dive::command_queue::{Command, CommandQueue};
+use crate::dive::tab_manager::TabManager;
 use crate::dive::widget_manager::{Widget, WidgetManager};
+use crate::dive::widgets::bookmark_list::BookmarkListWidget;
 use crate::dive::widgets::help::Help;
 use crate::dive::widgets::menu_bar::MenuBar;
 use crate::dive::widgets::status_bar::StatusBar;
 use crate::dive::widgets::tab_list::TabListWidget;
-use crate::dive::widgets::tab_manager::TabManager;
-use crate::dive::widgets::test::TestWidget;
+use crate::dive::widgets::tabs::TabsWidget;
 use crossterm::event;
 use crossterm::event::Event::Key;
 use crossterm::event::KeyCode::Char;
@@ -21,17 +23,21 @@ pub struct App {
     pub status_bar: Rc<RefCell<StatusBar>>,
     pub menu_bar: Rc<RefCell<MenuBar>>,
     pub tab_manager: Rc<RefCell<TabManager>>,
+    pub bookmark_manager: Rc<RefCell<BookmarkManager>>,
     pub widget_manager: WidgetManager,
 }
 
 impl App {
     pub fn new() -> Self {
+        let bm = BookmarkManager::new_from_file("bookmarks.json");
+
         let mut app = Self {
             should_quit: false,
 
             status_bar: Rc::new(RefCell::new(StatusBar::new())),
             menu_bar: Rc::new(RefCell::new(MenuBar::new())),
             tab_manager: Rc::new(RefCell::new(TabManager::new())),
+            bookmark_manager: Rc::new(RefCell::new(bm)),
 
             widget_manager: WidgetManager::new(),
             command_queue: CommandQueue::new(),
@@ -42,7 +48,9 @@ impl App {
         app.widget_manager.create(w1);
         let w1 = Widget::new("menubar", 0, true, app.menu_bar.clone());
         app.widget_manager.create(w1);
-        let w1 = Widget::new("tabs", 0, true, app.tab_manager.clone());
+
+        let inner = TabsWidget::new(app.tab_manager.clone());
+        let w1 = Widget::new("tabs", 0, true, Rc::new(RefCell::new(inner)));
         app.widget_manager.create(w1);
 
         app
@@ -102,31 +110,20 @@ impl App {
                 });
             }
             KeyCode::F(2) => {
-                let inner = TestWidget::new("dos/4gw");
-                let w2 = Widget::new("test1", 128, false, Rc::new(RefCell::new(inner)));
-                self.widget_manager.create(w2);
-
-                self.command_queue.push(Command::ToggleWidget {
-                    id: "test1".into(),
-                    focus: false,
-                });
-            }
-            KeyCode::F(3) => {
-                let inner = TestWidget::new("freebsd");
-                let w3 = Widget::new("test2", 64, false, Rc::new(RefCell::new(inner)));
-                self.widget_manager.create(w3);
-
-                self.command_queue.push(Command::ToggleWidget {
-                    id: "test2".into(),
-                    focus: false,
-                });
-            }
-            KeyCode::F(4) => {
                 let inner = TabListWidget::new(self.tab_manager.clone());
                 let widget = Widget::new("tab_list", 64, false, Rc::new(RefCell::new(inner)));
                 self.widget_manager.create(widget);
                 self.command_queue.push(Command::ShowWidget {
                     id: "tab_list".into(),
+                    focus: true,
+                });
+            }
+            KeyCode::F(8) => {
+                let inner = BookmarkListWidget::new(self.bookmark_manager.clone());
+                let widget = Widget::new("bookmark_list", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(widget);
+                self.command_queue.push(Command::ShowWidget {
+                    id: "bookmark_list".into(),
                     focus: true,
                 });
             }

@@ -1,7 +1,7 @@
 use crate::dive::command_queue::{Command, CommandQueue};
+use crate::dive::tab_manager::TabManager;
 use crate::dive::ui::centered_rect;
 use crate::dive::widget_manager::Drawable;
-use crate::dive::widgets::tab_manager::TabManager;
 use crossterm::event::{KeyCode, KeyEvent};
 use ratatui::prelude::*;
 use ratatui::widgets::{Block, Borders, Clear, List, ListDirection, ListState, Padding};
@@ -27,6 +27,9 @@ impl TabListWidget {
 }
 
 impl Drawable for TabListWidget {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let mut items = vec![];
         for (idx, tab) in self.tab_manager.borrow().tabs.iter().enumerate() {

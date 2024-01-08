@@ -7,7 +7,7 @@ use ratatui::prelude::*;
 use ratatui::widgets::{Block, BorderType, Borders, Clear, Paragraph};
 use ratatui::Frame;
 
-const SPLASH_TEXT: &str = r#"
+const SPLASH_TEXT: &str = r"
   _____ _____ _____ _   _______      ______ _____ _   _ _____
   |  __ \  _  /  ___| | | | ___ \     |  _  \_   _| | | |  ___|
  | |  \/ | | \ `--.| | | | |_/ /     | | | | | | | | | | |__
@@ -20,7 +20,7 @@ Press ESC to continue
 The text based browser based on the Gosub engine
 Copyright (C) 2024 - The Gosub Community
 
-"#;
+";
 
 pub struct SplashWidget;
 
@@ -31,6 +31,9 @@ impl SplashWidget {
 }
 
 impl Drawable for SplashWidget {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let block = Block::new()
             .borders(Borders::ALL)

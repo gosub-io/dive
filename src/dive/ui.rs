@@ -29,7 +29,7 @@ pub fn get_layout_chunks(f: &mut Frame) -> Rc<[Rect]> {
     let size = f.size();
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .margin(1)
+        // .margin(1)
         .constraints(
             [
                 Constraint::Length(1), // menu bar

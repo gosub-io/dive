@@ -25,6 +25,9 @@ impl MenuBar {
 }
 
 impl Drawable for MenuBar {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let menu_items = [
             "File",

@@ -147,6 +147,9 @@ impl Help {
 }
 
 impl Drawable for Help {
+    fn on_show(&mut self) {}
+    fn on_hide(&mut self) {}
+
     fn render(&mut self, f: &mut Frame) {
         let size = f.size();
         let margins = Layout::default()

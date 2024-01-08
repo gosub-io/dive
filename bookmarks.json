@@ -1,0 +1,147 @@
+{
+  "name": "Gosub Dive bookmarks Of JayTaph",
+  "subfolders": [
+    {
+      "name": "projects",
+      "subfolders": [
+        {
+          "name": "project 1",
+          "subfolders": [],
+          "bookmarks": [
+            {
+              "title": "My first url",
+              "tags": [
+              ],
+              "keywords": [
+              ],
+              "url": "http://www.first.url"
+            },
+            {
+              "title": "My second url",
+              "tags": [
+              ],
+              "keywords": [
+              ],
+              "url": "http://www.second.url"
+            },
+            {
+              "title": "My third url",
+              "tags": [
+              ],
+              "keywords": [
+              ],
+              "url": "http://www.third.url"
+            },
+            {
+              "title": "My fourth url",
+              "tags": [
+              ],
+              "keywords": [
+              ],
+              "url": "http://www.fourth.url"
+            }
+          ]
+        },
+        {
+          "name": "project 2",
+          "subfolders": [],
+          "bookmarks": [
+            {
+              "title": "My second project",
+              "tags": [
+                "html",
+                "css",
+                "javascript"
+              ],
+              "keywords": [
+                "project"
+              ],
+              "url": "http://www.myfirstproject.com"
+            },
+            {
+              "title": "My email",
+              "tags": [
+                "email"
+              ],
+              "keywords": [
+                "email"
+              ],
+              "url": "http://www.somethingwith.email"
+            }
+          ]
+        }
+      ],
+      "bookmarks": [
+        {
+          "title": "My global project",
+          "tags": [
+            "html",
+            "css",
+            "javascript"
+          ],
+          "keywords": [
+            "project"
+          ],
+          "url": "http://www.myglobalproject.com"
+        }
+      ]
+    },
+    {
+      "name": "websites",
+      "subfolders": [],
+      "bookmarks": [
+        {
+          "title": "My first website",
+          "tags": [
+            "html",
+            "css",
+            "javascript"
+          ],
+          "keywords": [
+            "website"
+          ],
+          "url": "http://www.myfirstwebsite.com"
+        },
+        {
+          "title": "My second website",
+          "tags": [
+            "html",
+            "css",
+            "javascript"
+          ],
+          "keywords": [
+            "website"
+          ],
+          "url": "http://www.mysecondwebsite.com",
+          "last_visited": 1704706050
+        }
+      ]
+    }
+  ],
+  "bookmarks": [
+    {
+      "title": "My first root site",
+      "tags": [
+        "html",
+        "css",
+        "javascript"
+      ],
+      "keywords": [
+        "website"
+      ],
+      "url": "http://www.myfirstwebsite.com"
+    },
+    {
+      "title": "My second root website",
+      "tags": [
+        "html",
+        "css",
+        "javascript"
+      ],
+      "keywords": [
+        "website"
+      ],
+      "url": "http://www.mysecondwebsite.com"
+    }
+  ]
+}
