@@ -1,6 +1,7 @@
 pub mod bookmark_list;
 pub mod help;
 pub mod input;
+pub mod log;
 pub mod menu_bar;
 pub mod splash;
 pub mod status_bar;

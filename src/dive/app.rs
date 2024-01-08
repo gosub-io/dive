@@ -1,10 +1,12 @@
 use crate::dive::bookmark_manager::BookmarkManager;
 use crate::dive::command_queue::{Command, CommandQueue};
+use crate::dive::gosub_logger::LogPool;
 use crate::dive::tab_manager::TabManager;
 use crate::dive::widget_manager::{Widget, WidgetManager};
 use crate::dive::widgets::bookmark_list::BookmarkListWidget;
 use crate::dive::widgets::help::Help;
 use crate::dive::widgets::input::{InputSubmitCommand, InputWidget};
+use crate::dive::widgets::log::LogWidget;
 use crate::dive::widgets::menu_bar::MenuBar;
 use crate::dive::widgets::status_bar::StatusBar;
 use crate::dive::widgets::tab_list::TabListWidget;
@@ -15,6 +17,7 @@ use crossterm::event::KeyCode::Char;
 use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 pub struct App {
     pub should_quit: bool,
@@ -26,10 +29,11 @@ pub struct App {
 
     pub widget_manager: WidgetManager,
     pub command_queue: CommandQueue,
+    pub log_pool: Arc<Mutex<LogPool>>,
 }
 
 impl App {
-    pub fn new() -> Self {
+    pub fn new(pool: Arc<Mutex<LogPool>>) -> Self {
         let bm = BookmarkManager::new_from_file("bookmarks.json");
 
         let mut app = Self {
@@ -42,6 +46,8 @@ impl App {
 
             widget_manager: WidgetManager::new(),
             command_queue: CommandQueue::new(),
+
+            log_pool: pool.clone(),
         };
 
         // Add the main widgets
@@ -119,6 +125,16 @@ impl App {
                 self.widget_manager.create(widget);
                 self.command_queue.push(Command::ShowWidget {
                     id: "tab_list".into(),
+                    focus: true,
+                });
+            }
+            // Show logs
+            KeyCode::F(6) => {
+                let inner = LogWidget::new(self.log_pool.clone());
+                let widget = Widget::new("logs", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(widget);
+                self.command_queue.push(Command::ShowWidget {
+                    id: "logs".into(),
                     focus: true,
                 });
             }
@@ -235,8 +251,8 @@ impl App {
                     }
                     InputSubmitCommand::OpenTabWithUrl => {
                         self.command_queue.push(Command::NewTabUrl {
-                            title: "New Tab".into(),
-                            url: value,
+                            title: value.clone(),
+                            url: value.clone(),
                         });
                     }
                 },

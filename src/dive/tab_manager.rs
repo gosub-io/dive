@@ -35,6 +35,7 @@ impl TabManager {
         };
 
         self.tabs.push(tab);
+        log::debug!("Opening new tab: {}", url);
 
         self.tabs.len() - 1
     }
@@ -44,12 +45,14 @@ impl TabManager {
             self.current = idx;
         }
 
+        log::trace!("Switching to tab: {}", self.current);
         self.current
     }
 
     pub fn next(&mut self) -> usize {
         self.current = (self.current + 1) % self.tabs.len();
 
+        log::trace!("Switching to tab: {}", self.current);
         self.current
     }
 
@@ -61,6 +64,7 @@ impl TabManager {
             self.current = self.tabs.len() - 1;
         }
 
+        log::trace!("Switching to tab: {}", self.current);
         self.current
     }
 
@@ -70,6 +74,8 @@ impl TabManager {
             if self.current >= self.tabs.len() {
                 self.current = self.tabs.len() - 1;
             }
+
+            log::trace!("Closed tab {}", idx);
         }
     }
 
