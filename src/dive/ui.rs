@@ -2,6 +2,12 @@ use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::Frame;
 use std::rc::Rc;
 
+pub fn centered_rect_fixed(width: u16, height: u16, r: Rect) -> Rect {
+    let position = ((r.width - width) / 2, (r.height - height) / 2);
+
+    Rect::new(position.0, position.1, width, height)
+}
+
 pub fn centered_rect(percent_x: u16, percent_y: u16, r: Rect) -> Rect {
     // Cut the given rectangle into three vertical pieces
     let popup_layout = Layout::default()
