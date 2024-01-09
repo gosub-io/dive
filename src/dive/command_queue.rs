@@ -33,6 +33,13 @@ pub enum Command {
         tab_idx: usize,
         name: String,
     },
+    NewTabUrl {
+        title: String,
+        url: String,
+    },
+    CloseTab {
+        idx: usize,
+    },
 }
 
 pub struct CommandQueue {
