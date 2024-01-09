@@ -18,6 +18,7 @@ pub struct InputWidget {
 #[derive(Clone, Debug, PartialEq)]
 pub enum InputSubmitCommand {
     RenameTab { tab_idx: usize },
+    OpenTabWithUrl,
 }
 
 impl InputWidget {

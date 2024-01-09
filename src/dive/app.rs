@@ -147,6 +147,23 @@ impl App {
                     .borrow_mut()
                     .status(format!("Switched to tab {}", idx).as_str());
             }
+            // Asks and opens URL in new tab
+            Char('g') if key.modifiers.contains(KeyModifiers::CONTROL) => {
+                let name = "";
+                let inner = InputWidget::new(
+                    "Enter the URL to visit",
+                    name,
+                    80,
+                    InputSubmitCommand::OpenTabWithUrl,
+                );
+
+                let widget = Widget::new("input", 64, false, Rc::new(RefCell::new(inner)));
+                self.widget_manager.create(widget);
+                self.command_queue.push(Command::ShowWidget {
+                    id: "input".into(),
+                    focus: true,
+                });
+            }
             // change the name of the current tab
             Char('r') if key.modifiers.contains(KeyModifiers::CONTROL) => {
                 let name = self.tab_manager.borrow().current().name.clone();
@@ -168,27 +185,15 @@ impl App {
             }
             // Close current tab
             Char('w') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                if self.tab_manager.borrow().len() == 1 {
-                    self.status_bar.borrow_mut().status("Can't close last tab");
-                    return Ok(());
-                }
-
                 let idx = self.tab_manager.borrow().current;
-                self.tab_manager.borrow_mut().close(idx);
-                self.status_bar
-                    .borrow_mut()
-                    .status(format!("Closed tab {}", idx).as_str());
+                self.command_queue.push(Command::CloseTab { idx });
             }
             // Add new tab with blank page
             Char('n') if key.modifiers.contains(KeyModifiers::CONTROL) => {
-                let idx = self
-                    .tab_manager
-                    .borrow_mut()
-                    .open("New Tab", "gosub://blank");
-                self.tab_manager.borrow_mut().switch(idx);
-                self.status_bar
-                    .borrow_mut()
-                    .status(format!("Opened new tab {}", idx).as_str());
+                self.command_queue.push(Command::NewTabUrl {
+                    title: "New Tab".into(),
+                    url: "gosub://blank".into(),
+                });
             }
             // quit application
             Char('q') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -228,9 +233,41 @@ impl App {
                             name: value,
                         });
                     }
+                    InputSubmitCommand::OpenTabWithUrl => {
+                        self.command_queue.push(Command::NewTabUrl {
+                            title: "New Tab".into(),
+                            url: value,
+                        });
+                    }
                 },
                 Some(Command::RenameTab { tab_idx, name }) => {
                     self.tab_manager.borrow_mut().rename(tab_idx, &name);
+                }
+                Some(Command::NewTabUrl { title, url }) => {
+                    let idx = self
+                        .tab_manager
+                        .borrow_mut()
+                        .open(title.as_str(), url.as_str());
+                    self.tab_manager.borrow_mut().switch(idx);
+                    self.status_bar
+                        .borrow_mut()
+                        .status(format!("Opened new tab {}", idx).as_str());
+                }
+                Some(Command::CloseTab { idx }) => {
+                    if self.tab_manager.borrow().len() == 1 {
+                        self.status_bar.borrow_mut().status("Can't close last tab");
+                        return;
+                    }
+
+                    self.tab_manager.borrow_mut().close(idx);
+                    self.status_bar
+                        .borrow_mut()
+                        .status(format!("Closed tab {}", idx).as_str());
+
+                    self.tab_manager.borrow_mut().close(idx);
+                    self.status_bar
+                        .borrow_mut()
+                        .status(format!("Closed tab {}", idx).as_str());
                 }
             }
         }
