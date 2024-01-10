@@ -1,4 +1,5 @@
 use crate::dive::app::App;
+use crate::dive::gosub_logger::{GosubLogger, LogPool};
 use crate::dive::widget_manager::Widget;
 use crate::dive::widgets::splash::SplashWidget;
 use anyhow::Result;
@@ -7,9 +8,11 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
+use log::LevelFilter;
 use ratatui::prelude::{CrosstermBackend, Terminal};
 use std::cell::RefCell;
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 mod dive;
 
@@ -57,7 +60,18 @@ pub fn initialize_panic_handler() {
 }
 
 fn main() -> Result<()> {
-    let mut app = App::new();
+    let log_pool = Arc::new(Mutex::new(LogPool::new(10)));
+
+    let logger = GosubLogger::new(log_pool.clone());
+    log::set_max_level(LevelFilter::Trace);
+    let _ = log::set_boxed_logger(Box::new(logger));
+    log::error!("Starting Gosub...");
+    log::warn!("Starting Gosub...");
+    log::info!("Starting Gosub...");
+    log::trace!("Starting Gosub...");
+    log::debug!("Starting Gosub...");
+
+    let mut app = App::new(log_pool);
 
     app.tab_manager
         .borrow_mut()
