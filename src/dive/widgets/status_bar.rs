@@ -5,19 +5,31 @@ use crossterm::event::KeyEvent;
 use ratatui::prelude::*;
 use ratatui::widgets::{Clear, Paragraph};
 
+pub struct TabInfo {
+    pub name: String,
+    pub url: String,
+    pub secure: bool,
+}
+
 pub struct StatusBar {
     pub status: String,
+    pub tab_info: Option<TabInfo>,
 }
 
 impl StatusBar {
     pub fn new() -> Self {
         Self {
             status: "Press F1 for help".into(),
+            tab_info: None,
         }
     }
 
     pub fn status(&mut self, status: &str) {
         self.status = status.to_string();
+    }
+
+    pub fn tab_info(&mut self, tab_info: Option<TabInfo>) {
+        self.tab_info = tab_info;
     }
 }
 
@@ -34,7 +46,21 @@ impl Drawable for StatusBar {
                 Style::default().add_modifier(Modifier::BOLD),
             ),
             Span::raw(" | "),
-            Span::raw("Line 1, Column 1"),
+            if let Some(tab_info) = &self.tab_info {
+                Span::styled(
+                    format!(
+                        "{} {}",
+                        if tab_info.secure { "🔒" } else { "  " },
+                        tab_info.url
+                    ),
+                    Style::default().add_modifier(Modifier::BOLD),
+                )
+            } else {
+                Span::styled(
+                    "No tabs open",
+                    Style::default().add_modifier(Modifier::BOLD),
+                )
+            },
         ]))
         .style(Style::default().bg(Color::Blue).bold());
 

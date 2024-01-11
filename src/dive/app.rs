@@ -104,6 +104,9 @@ impl App {
                     self.status_bar
                         .borrow_mut()
                         .status(format!("Switched to tab {}", digit).as_str());
+                    self.status_bar
+                        .borrow_mut()
+                        .tab_info(Some(self.tab_manager.borrow().current().info()));
                 }
             }
             // Show help
@@ -155,6 +158,9 @@ impl App {
                 self.status_bar
                     .borrow_mut()
                     .status(format!("Switched to tab {}", idx).as_str());
+                self.status_bar
+                    .borrow_mut()
+                    .tab_info(Some(self.tab_manager.borrow().current().info()));
             }
             // switch to next tab
             KeyCode::Tab => {
@@ -162,6 +168,9 @@ impl App {
                 self.status_bar
                     .borrow_mut()
                     .status(format!("Switched to tab {}", idx).as_str());
+                self.status_bar
+                    .borrow_mut()
+                    .tab_info(Some(self.tab_manager.borrow().current().info()));
             }
             // Asks and opens URL in new tab
             Char('g') if key.modifiers.contains(KeyModifiers::CONTROL) => {
@@ -268,6 +277,9 @@ impl App {
                     self.status_bar
                         .borrow_mut()
                         .status(format!("Opened new tab {}", idx).as_str());
+                    self.status_bar
+                        .borrow_mut()
+                        .tab_info(Some(self.tab_manager.borrow().current().info()));
                 }
                 Some(Command::CloseTab { idx }) => {
                     if self.tab_manager.borrow().len() == 1 {
@@ -279,11 +291,9 @@ impl App {
                     self.status_bar
                         .borrow_mut()
                         .status(format!("Closed tab {}", idx).as_str());
-
-                    self.tab_manager.borrow_mut().close(idx);
                     self.status_bar
                         .borrow_mut()
-                        .status(format!("Closed tab {}", idx).as_str());
+                        .tab_info(Some(self.tab_manager.borrow().current().info()));
                 }
             }
         }
