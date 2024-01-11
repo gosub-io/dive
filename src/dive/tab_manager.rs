@@ -1,7 +1,21 @@
+use crate::dive::widgets::status_bar::TabInfo;
+use ureq;
+
 pub struct Tab {
     pub name: String,
     pub url: String,
     pub content: String,
+    pub secure: bool,
+}
+
+impl Tab {
+    pub fn info(&self) -> TabInfo {
+        TabInfo {
+            name: self.name.clone(),
+            url: self.url.clone(),
+            secure: self.secure,
+        }
+    }
 }
 
 pub struct TabManager {
@@ -28,11 +42,15 @@ impl TabManager {
     }
 
     pub fn open(&mut self, name: &str, url: &str) -> usize {
-        let tab = Tab {
+        let mut tab = Tab {
             name: name.into(),
             url: url.into(),
             content: String::new(),
+            secure: false,
         };
+
+        tab.secure = url.starts_with("https://");
+        tab.content = load_content(url).expect("Failed to load content").clone();
 
         self.tabs.push(tab);
         log::debug!("Opening new tab: {}", url);
@@ -82,4 +100,25 @@ impl TabManager {
     pub fn len(&self) -> usize {
         self.tabs.len()
     }
+}
+
+fn load_content(url: &str) -> Result<String, anyhow::Error> {
+    if url.starts_with("file://") {
+        return Ok("File content is not supported".into());
+    }
+
+    if url.starts_with("http://") {
+        let content = ureq::get(url).call()?.into_string()?;
+
+        return Ok(content);
+    }
+
+    if url.starts_with("https://") {
+        // TLS
+        let content = ureq::get(url).call()?.into_string()?;
+
+        return Ok(content);
+    }
+
+    Ok("Unknown protocol".into())
 }
