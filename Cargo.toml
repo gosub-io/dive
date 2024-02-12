@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.79"
 crossterm = "0.27.0"
-ratatui = "0.25.0"
+ratatui = "0.26.1"
 tui-input = "0.8.0"
 log = "0.4.20"
 simple_logger = "4.3.3"
