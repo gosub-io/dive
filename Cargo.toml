@@ -14,11 +14,11 @@ log = "0.4.20"
 simple_logger = "4.3.3"
 derive_more = { version = "0.99", features = [] }
 better-panic = "0.3.0"
-serde = { version = "1.0.195", features = ["derive"] }
-serde_json = { version = "1.0.111", features = [] }
+serde = { version = "1.0.197", features = ["derive"] }
+serde_json = { version = "1.0.114", features = [] }
 tui-tree-widget = "0.16.0"
 filetreelist = "0.5.0"
 uuid = { version = "1.7.0", features = ["v4", "serde"] }
-chrono = "0.4.31"
+chrono = "0.4.35"
 once_cell = "1.19.0"
 ureq = "2.9.1"
