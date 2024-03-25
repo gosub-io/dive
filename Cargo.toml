@@ -10,7 +10,7 @@ anyhow = "1.0.79"
 crossterm = "0.27.0"
 ratatui = "0.25.0"
 tui-input = "0.8.0"
-log = "0.4.20"
+log = "0.4.21"
 simple_logger = "4.3.3"
 derive_more = { version = "0.99", features = [] }
 better-panic = "0.3.0"
