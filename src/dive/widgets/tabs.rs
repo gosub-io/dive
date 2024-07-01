@@ -3,12 +3,27 @@ use crate::dive::tab_manager::TabManager;
 use crate::dive::ui::get_layout_chunks;
 use crate::dive::widget_manager::Drawable;
 use crossterm::event::KeyEvent;
-use ratatui::layout::Layout;
+use ratatui::layout::{Layout, Rect};
 use ratatui::prelude::{Constraint, Direction, Stylize};
-use ratatui::widgets::{Block, Borders, Clear, ListState, Paragraph, Tabs, Wrap};
+use ratatui::widgets::{Block, Borders, Clear, ListState, Paragraph, Tabs, Widget, Wrap};
 use ratatui::Frame;
 use std::cell::RefCell;
 use std::rc::Rc;
+use ratatui::buffer::Buffer;
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash)]
+pub struct BackgroundClear;
+
+impl Widget for BackgroundClear {
+    fn render(self, area: Rect, buf: &mut Buffer) {
+        for x in area.left()..area.right() {
+            for y in area.top()..area.bottom() {
+                buf.get_mut(x, y).reset();
+                buf.get_mut(x, y).set_char('░');
+            }
+        }
+    }
+}
 
 pub struct TabsWidget {
     pub tab_manager: Rc<RefCell<TabManager>>,
@@ -60,6 +75,7 @@ impl Drawable for TabsWidget {
 
         let content = self.tab_manager.borrow().current().content.clone();
         let block = Block::default().borders(Borders::NONE).on_dark_gray();
+
         let paragraph = Paragraph::new(content)
             .block(block)
             .wrap(Wrap { trim: true });

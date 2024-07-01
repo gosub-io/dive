@@ -1,5 +1,7 @@
+use anyhow::Error;
 use crate::dive::widgets::status_bar::TabInfo;
 use ureq;
+use url::Url;
 
 pub struct Tab {
     pub name: String,
@@ -103,22 +105,58 @@ impl TabManager {
 }
 
 fn load_content(url: &str) -> Result<String, anyhow::Error> {
-    if url.starts_with("file://") {
-        return Ok("File content is not supported".into());
+    let parts = match Url::parse(url) {
+        Ok(parts) => parts,
+        Err(e) => return Err(anyhow::Error::msg(format!("Invalid URL: {}", e))),
+    };
+
+    if parts.scheme() == "file" {
+        return Ok("File content is not yet supported".into());
+    }
+    if parts.scheme() == "data" {
+        return Ok("Data content is not yet supported".into());
+    }
+    if parts.scheme() == "gosub" {
+        return process_gosub_protocol(parts);
     }
 
-    if url.starts_with("http://") {
+    if parts.scheme() == "" || parts.scheme() == "https" {
         let content = ureq::get(url).call()?.into_string()?;
-
+        return Ok(content);
+    }
+    if parts.scheme() == "" || parts.scheme() == "http" {
+        log::warn!("Opening insecure connection to {}", url);
+        let content = ureq::get(url).call()?.into_string()?;
         return Ok(content);
     }
 
-    if url.starts_with("https://") {
-        // TLS
-        let content = ureq::get(url).call()?.into_string()?;
-
-        return Ok(content);
-    }
+    // Always assume no protocol defaults to HTTPS://
 
     Ok("Unknown protocol".into())
+}
+
+fn process_gosub_protocol(url: Url) -> Result<String, Error> {
+    match url.host_str() {
+        Some("blank") => return Ok("This page is left intentionally blank".into()),
+        Some("help") => return Ok(gosub_help()),
+        Some("credits") => return Ok("Here be credits for the gosub engine".into()),
+        Some("settings") => return Ok("Here you can tinker with all kinds of dive and gosub settings".into()),
+        _ => return Ok("Unknown gosub protocol".into()),
+    }
+}
+
+fn gosub_help() -> String {
+    return r#"<h1>gosub://help</h1>
+
+    <p>This is the help page for the gosub engine</p>
+
+    <p>The following special gosub pages are supported:</p>
+
+    <table>
+      <tr><td><a target="_blank"href="gosub://blank">gosub://blank</td><td>Opens a blank page</td></tr>
+      <tr><td><a target="_blank"href="gosub://help">gosub://help</td><td>Displays this help page</td></tr>
+      <tr><td><a target="_blank" href="gosub://credits">gosub://credits</td><td>Displays credits of the Dive Browser and the Gosub Engine</td></tr>
+      <tr><td><a target="_blank" href="gosub://settings">gosub://settings</td><td>Displays the settings page</td></tr>
+    </table>
+    "#.into();
 }

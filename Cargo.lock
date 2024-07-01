@@ -255,6 +255,7 @@ dependencies = [
  "tui-input",
  "tui-tree-widget",
  "ureq",
+ "url",
  "uuid",
 ]
 

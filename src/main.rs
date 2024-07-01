@@ -76,12 +76,6 @@ fn main() -> Result<()> {
     app.tab_manager
         .borrow_mut()
         .open("New Tab", "gosub://blank");
-    app.tab_manager
-        .borrow_mut()
-        .open("Second Tab", "https://gosub.io");
-    app.tab_manager
-        .borrow_mut()
-        .open("Third Tab", "https://news.ycombinator.com");
 
     let w1 = Widget::new(
         "splash",
